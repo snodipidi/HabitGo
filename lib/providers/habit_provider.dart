@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:habitgo/models/habit.dart';
 
 class HabitProvider with ChangeNotifier {
-  List<Habit> _habits = [];
+  final List<Habit> _habits = [];
   List<Habit> get habits => _habits;
 
   void addHabit(Habit habit) {
