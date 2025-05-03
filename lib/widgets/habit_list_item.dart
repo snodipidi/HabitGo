@@ -14,111 +14,72 @@ class HabitListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Slidable(
-        endActionPane: ActionPane(
-          motion: const ScrollMotion(),
-          children: [
-            SlidableAction(
-              onPressed: (context) {
-                Provider.of<HabitProvider>(context, listen: false)
-                    .removeHabit(habit.id);
-              },
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              icon: Icons.delete,
-              label: 'Удалить',
-            ),
-          ],
-        ),
-        child: Card(
-          child: InkWell(
-            onTap: () {
-              // TODO: Implement habit details screen
+    return Slidable(
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              Provider.of<HabitProvider>(context, listen: false)
+                  .removeHabit(habit.id);
             },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              habit.title,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              habit.description,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Transform.scale(
-                        scale: 1.2,
-                        child: Checkbox(
-                          value: habit.isCompletedForDate(DateTime.now()),
-                          onChanged: (bool? value) {
-                            if (value == true) {
-                              Provider.of<HabitProvider>(context, listen: false)
-                                  .markHabitComplete(habit.id, DateTime.now());
-                            } else {
-                              Provider.of<HabitProvider>(context, listen: false)
-                                  .markHabitIncomplete(habit.id, DateTime.now());
-                            }
-                          },
-                          activeColor: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(
-                    value: habit.getWeeklyProgress(),
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      habit.getWeeklyProgress() >= 1.0
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${habit.getCompletedDaysThisWeek()}/${habit.targetDaysPerWeek} дней на этой неделе',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        'Напоминание: ${habit.reminderTime.format(context)}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Удалить',
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha(230),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF4DD0E1),
+            width: 1.5,
+          ),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              habit.title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: Colors.black54,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Сегодня к ${habit.reminderTime.format(context)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const Spacer(),
+                Row(
+                  children: const [
+                    Icon(Icons.star, size: 20, color: Colors.black45),
+                    Icon(Icons.star, size: 20, color: Colors.black45),
+                    Icon(Icons.star, size: 20, color: Colors.black45),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
-} 
+}
