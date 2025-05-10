@@ -6,7 +6,7 @@ import 'package:habitgo/screens/habit_detail_screen.dart';
 import 'package:habitgo/providers/user_provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:habitgo/screens/settings_screen.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -39,21 +39,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     final userName = userProvider.user?.name ?? 'Пользователь';
 
-    return Scaffold(
-      body: Theme(
-        data: Theme.of(context).copyWith(
-          iconTheme: const IconThemeData(size: 48),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFE1FFFC),
+            Color(0xFF00A0A6),
+          ],
         ),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFE1FFFC),
-                Color(0xFF52B3B6),
-              ],
-            ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Theme(
+          data: Theme.of(context).copyWith(
+            iconTheme: const IconThemeData(size: 48),
           ),
           child: SafeArea(
             child: Padding(
@@ -151,60 +152,76 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF52B3B6),
-              Color(0xFF225B6A),
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF52B3B6),
+                Color(0xFF00A0A6),
+
+              ],
+            ),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                offset: Offset(0, -2),
+              ),
             ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -2),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white60,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          elevation: 0,
-          items: [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.check_box_rounded),
-              label: 'Мои хобби',
+            child: BottomNavigationBar(
+              backgroundColor: Colors.transparent,
+              selectedItemColor: Colors.white,
+              unselectedItemColor: Colors.white60,
+              showUnselectedLabels: true,
+              type: BottomNavigationBarType.fixed,
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+              elevation: 0,
+              items: [
+                BottomNavigationBarItem(
+                  icon: SvgPicture.asset(
+                    'assets/icons/icon-home.svg',
+                    width: 24,
+                    height: 24,
+                    color: _selectedIndex == 0 ? Colors.white : Colors.white60,
+                  ),
+                  label: 'Мои хобби',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.emoji_emotions),
+                  label: 'Расписание',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(
+                    Icons.add,
+                    size: 24,
+                    color: Colors.white,
+                  ),
+                  label: 'Добавить',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.hourglass_bottom),
+                  label: 'Отложенные',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.settings),
+                  label: 'Настройки',
+                ),
+              ],
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.emoji_emotions),
-              label: 'Расписание',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.add,
-                size: 24,
-                color: Colors.white,
-              ),
-              label: 'Добавить',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.hourglass_bottom),
-              label: 'Отложенные',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Настройки',
-            ),
-          ],
+          ),
         ),
       ),
     );
