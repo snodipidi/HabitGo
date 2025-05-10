@@ -9,6 +9,15 @@ class UserProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  String get userName => user?.name ?? 'Пользователь';
+
+  void updateUserName(String newName) {
+    if (_user != null) {
+      _user = User(name: newName);
+      notifyListeners();
+    }
+  }
+
   Future<void> initializeUser() async {
     if (_isLoading) return;
     

@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:habitgo/screens/add_habit_screen.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   void _showStub(BuildContext context, String title) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -58,20 +71,19 @@ class MainScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Пример карточек привычек
-                const _HabitCard(
+                _HabitCard(
                   title: 'Прочитай 10 страниц',
                   time: 'Сегодня к 20:00',
                   stars: 3,
                 ),
                 const SizedBox(height: 12),
-                const _HabitCard(
+                _HabitCard(
                   title: 'Пробежка 10 минут',
                   time: 'Сегодня к 17:00',
                   stars: 3,
                 ),
                 const SizedBox(height: 12),
-                const _HabitCard(
+                _HabitCard(
                   title: 'Поиграй на гитаре',
                   time: 'Сегодня к 19:00',
                   stars: 3,
@@ -99,28 +111,28 @@ class MainScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: _BottomNavBar(
-        onAdd: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddHabitScreen()),
-          );
-        },
-        onTab: (context, index) {
-          switch (index) {
-            case 0:
-              _showStub(context, 'Мои хобби');
-              break;
-            case 1:
-              _showStub(context, 'Расписание');
-              break;
-            case 3:
-              _showStub(context, 'Отложенные');
-              break;
-            case 4:
-              _showStub(context, 'Настройки');
-              break;
-          }
-        },
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFF52B3B6),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Главная',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart),
+            label: 'Статистика',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Настройки',
+          ),
+        ],
       ),
     );
   }
@@ -138,7 +150,7 @@ class _HabitCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(230),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF52B3B6), width: 1),
       ),
@@ -190,7 +202,7 @@ class _BottomNavBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(180),
+        color: Colors.white.withOpacity(0.7),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),

@@ -1,24 +1,51 @@
 import 'package:flutter/foundation.dart';
 import 'package:habitgo/models/habit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HabitProvider with ChangeNotifier {
-  final List<Habit> _habits = [];
-  List<Habit> get habits => _habits;
+  List<Habit> _habits = [];
+
+  List<Habit> get habits => [..._habits];
+
+  HabitProvider() {
+    _loadHabits();
+  }
+
+  Future<void> _loadHabits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final habitsJson = prefs.getStringList('habits') ?? [];
+    _habits = habitsJson
+        .map((json) => Habit.fromJson(jsonDecode(json)))
+        .toList();
+    notifyListeners();
+  }
+
+  Future<void> _saveHabits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final habitsJson = _habits
+        .map((habit) => jsonEncode(habit.toJson()))
+        .toList();
+    await prefs.setStringList('habits', habitsJson);
+  }
 
   void addHabit(Habit habit) {
     _habits.add(habit);
+    _saveHabits();
     notifyListeners();
   }
 
   void removeHabit(String id) {
     _habits.removeWhere((habit) => habit.id == id);
+    _saveHabits();
     notifyListeners();
   }
 
-  void updateHabit(Habit updatedHabit) {
-    final index = _habits.indexWhere((habit) => habit.id == updatedHabit.id);
-    if (index != -1) {
-      _habits[index] = updatedHabit;
+  void updateHabit(Habit habit) {
+    final index = _habits.indexWhere((h) => h.id == habit.id);
+    if (index >= 0) {
+      _habits[index] = habit;
+      _saveHabits();
       notifyListeners();
     }
   }
@@ -27,6 +54,7 @@ class HabitProvider with ChangeNotifier {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
       _habits[index].completeForDate(date);
+      _saveHabits();
       notifyListeners();
     }
   }
@@ -35,6 +63,7 @@ class HabitProvider with ChangeNotifier {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
       _habits[index].uncompleteForDate(date);
+      _saveHabits();
       notifyListeners();
     }
   }
