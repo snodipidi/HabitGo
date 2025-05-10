@@ -8,6 +8,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:habitgo/screens/settings_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habitgo/screens/my_habits_screen.dart';
+import 'package:habitgo/screens/schedule_screen.dart';
+import 'package:habitgo/screens/deferred_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,18 +26,22 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const MyHabitsScreen()),
       );
+    } else if (index == 1) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const ScheduleScreen()),
+      );
     } else if (index == 2) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const HabitDetailScreen()),
+      );
+    } else if (index == 3) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const DeferredScreen()),
       );
     } else if (index == 4) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const SettingsScreen()),
       );
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
     }
   }
 
