@@ -10,6 +10,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habitgo/screens/my_habits_screen.dart';
 import 'package:habitgo/screens/schedule_screen.dart';
 import 'package:habitgo/screens/deferred_screen.dart';
+import 'package:habitgo/providers/recommendations_provider.dart';
+import 'package:habitgo/widgets/recommendations_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -128,22 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                         ),
                         const SizedBox(height: 28),
-                        const Text(
-                          'Рекомендации',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFE0FFFF),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Добавь новое хобби или\nвыдели 5 минут на отдых',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFFE0FFFF),
-                          ),
-                        ),
+                        const RecommendationsSection(),
                         const SizedBox(height: 16),
                       ],
                     )

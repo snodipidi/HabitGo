@@ -4,6 +4,7 @@ import 'package:habitgo/providers/habit_provider.dart';
 import 'package:habitgo/providers/user_provider.dart';
 import 'package:habitgo/screens/welcome_screen.dart';
 import 'package:habitgo/screens/home_screen.dart';
+import 'providers/recommendations_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => HabitProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => RecommendationsProvider()),
       ],
       child: MaterialApp(
         title: 'HabitGo',
@@ -47,7 +49,15 @@ class _InitialScreenState extends State<InitialScreen> {
 
   Future<void> _initializeApp() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final recommendationsProvider = Provider.of<RecommendationsProvider>(context, listen: false);
+    
+    // Сначала инициализируем пользователя
     await userProvider.initializeUser();
+    
+    // Затем загружаем рекомендации
+    if (userProvider.isInitialized) {
+      await recommendationsProvider.loadRecommendations();
+    }
   }
 
   @override
