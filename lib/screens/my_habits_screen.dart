@@ -49,10 +49,10 @@ class MyHabitsScreen extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: habitProvider.habits.isEmpty
+                child: habitProvider.activeHabits.isEmpty
                     ? const Center(
                         child: Text(
-                          'У вас пока нет привычек',
+                          'Нет активных привычек.',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.black54,
@@ -60,11 +60,11 @@ class MyHabitsScreen extends StatelessWidget {
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: habitProvider.habits.length,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: habitProvider.activeHabits.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final habit = habitProvider.habits[index];
+                          final habit = habitProvider.activeHabits[index];
                           return _HabitListItem(
                             habit: habit,
                             index: index,

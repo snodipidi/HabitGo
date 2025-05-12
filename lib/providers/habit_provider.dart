@@ -7,6 +7,12 @@ class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
 
   List<Habit> get habits => [..._habits];
+  
+  // Get only active (not completed) habits
+  List<Habit> get activeHabits => _habits.where((habit) => !habit.isCompleted).toList();
+  
+  // Get only completed habits
+  List<Habit> get completedHabits => _habits.where((habit) => habit.isCompleted).toList();
 
   HabitProvider() {
     _loadHabits();
@@ -53,6 +59,9 @@ class HabitProvider with ChangeNotifier {
   void markHabitComplete(String id, DateTime date) {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
+      _habits[index] = _habits[index].copyWith(
+        isCompleted: true,
+      );
       _habits[index].completeForDate(date);
       _saveHabits();
       notifyListeners();
@@ -62,6 +71,9 @@ class HabitProvider with ChangeNotifier {
   void markHabitIncomplete(String id, DateTime date) {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
+      _habits[index] = _habits[index].copyWith(
+        isCompleted: false,
+      );
       _habits[index].uncompleteForDate(date);
       _saveHabits();
       notifyListeners();

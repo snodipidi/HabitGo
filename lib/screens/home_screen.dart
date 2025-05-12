@@ -9,7 +9,7 @@ import 'package:habitgo/screens/settings_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habitgo/screens/my_habits_screen.dart';
 import 'package:habitgo/screens/schedule_screen.dart';
-import 'package:habitgo/screens/deferred_screen.dart';
+import 'package:habitgo/screens/archive_screen.dart';
 import 'package:habitgo/providers/recommendations_provider.dart';
 import 'package:habitgo/widgets/recommendations_section.dart';
 import 'package:habitgo/screens/create_habit_screen.dart';
@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else if (index == 3) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const DeferredScreen()),
+        MaterialPageRoute(builder: (context) => const ArchiveScreen()),
       );
     } else if (index == 4) {
       Navigator.of(context).push(
@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         Expanded(
-                          child: habitProvider.habits.isEmpty
+                          child: habitProvider.activeHabits.isEmpty
                               ? const Center(
                                   child: Text(
                                     'Нет привычек на сегодня.',
@@ -118,10 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 )
                               : ListView.separated(
-                                  itemCount: habitProvider.habits.length,
+                                  itemCount: habitProvider.activeHabits.length,
                                   separatorBuilder: (context, index) => const SizedBox(height: 12),
                                   itemBuilder: (context, index) {
-                                    final habit = habitProvider.habits[index];
+                                    final habit = habitProvider.activeHabits[index];
                                     return _HabitListItem(
                                       habit: habit,
                                       index: index,
@@ -206,8 +206,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: 'Добавить',
                 ),
                 const BottomNavigationBarItem(
-                  icon: Icon(Icons.access_time),
-                  label: 'Отложенные',
+                  icon: Icon(Icons.archive_outlined),
+                  label: 'Архив',
                 ),
                 const BottomNavigationBarItem(
                   icon: Icon(Icons.settings),
@@ -250,117 +250,61 @@ class _HabitListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      key: ValueKey(habit.id),
-      startActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        extentRatio: 0.8,
-        children: [
-          SlidableAction(
-            onPressed: (_) => onComplete(),
-            backgroundColor: const Color(0xFF52B3B6),
-            foregroundColor: Colors.white,
-            icon: Icons.check_circle_outline_rounded,
-            label: '',
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-            autoClose: true,
-            flex: 1,
-            spacing: 0,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          SlidableAction(
-            onPressed: (_) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => EditHabitScreen(habit: habit),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  habit.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF225B6A),
+                  ),
                 ),
-              );
-            },
-            backgroundColor: const Color(0xFF225B6A),
-            foregroundColor: Colors.white,
-            icon: Icons.edit_outlined,
-            label: '',
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-            autoClose: true,
-            flex: 1,
-            spacing: 0,
-          ),
-        ],
-      ),
-      endActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        extentRatio: 0.4,
-        children: [
-          SlidableAction(
-            onPressed: (_) => onDelete(),
-            backgroundColor: Colors.red.shade400,
-            foregroundColor: Colors.white,
-            icon: Icons.delete_outline_rounded,
-            label: '',
-            borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-            autoClose: true,
-            flex: 1,
-            spacing: 0,
-          ),
-        ],
-      ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    habit.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF225B6A),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Сегодня к ${habit.reminderTime.format(context)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black45,
-                        ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Сегодня к ${habit.reminderTime.format(context)}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black45,
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            Row(
-              children: List.generate(3, (i) => const Icon(
-                Icons.star,
-                color: Color(0xFF52B3B6),
-                size: 22,
-              )),
-            ),
-          ],
-        ),
+          ),
+          Row(
+            children: List.generate(3, (i) => const Icon(
+              Icons.star,
+              color: Color(0xFF52B3B6),
+              size: 22,
+            )),
+          ),
+        ],
       ),
     );
   }
