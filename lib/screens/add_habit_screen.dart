@@ -45,7 +45,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         final habit = Habit(
           title: _habitNameController.text,
           description: _habitDescriptionController.text,
-          targetDaysPerWeek: 7,
+          selectedWeekdays: [1, 3, 5],
           reminderTime: const TimeOfDay(hour: 9, minute: 0),
           isActive: true,
         );

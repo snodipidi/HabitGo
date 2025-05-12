@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:habitgo/providers/habit_provider.dart';
 import 'package:habitgo/providers/user_provider.dart';
@@ -7,7 +8,23 @@ import 'package:habitgo/screens/home_screen.dart';
 import 'providers/recommendations_provider.dart';
 import 'package:habitgo/providers/category_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    // ignore: avoid_print
+    print('FLUTTER ERROR: ' + details.exceptionAsString());
+    if (details.stack != null) {
+      print(details.stack);
+    }
+  };
+  try {
+    await Firebase.initializeApp();
+    print('Firebase initialized');
+  } catch (e, stack) {
+    print('FIREBASE INIT ERROR: $e');
+    print(stack);
+  }
   runApp(const MyApp());
 }
 
@@ -50,15 +67,25 @@ class _InitialScreenState extends State<InitialScreen> {
   }
 
   Future<void> _initializeApp() async {
+    print('Initializing user...');
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final recommendationsProvider = Provider.of<RecommendationsProvider>(context, listen: false);
-    
-    // Сначала инициализируем пользователя
-    await userProvider.initializeUser();
-    
-    // Затем загружаем рекомендации
+    try {
+      await userProvider.initializeUser();
+      print('User initialized: \\${userProvider.isInitialized}');
+    } catch (e, stack) {
+      print('USER INIT ERROR: $e');
+      print(stack);
+    }
     if (userProvider.isInitialized) {
-      await recommendationsProvider.loadRecommendations();
+      try {
+        print('Loading recommendations...');
+        await recommendationsProvider.loadRecommendations();
+        print('Recommendations loaded');
+      } catch (e, stack) {
+        print('RECOMMENDATIONS LOAD ERROR: $e');
+        print(stack);
+      }
     }
   }
 
