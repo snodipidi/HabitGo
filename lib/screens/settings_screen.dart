@@ -22,6 +22,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (userCredential != null && mounted) {
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         await userProvider.setUserName(userCredential.user?.displayName ?? 'Пользователь');
+        print('currentUser: \\${_authService.currentUser}');
+        setState(() {}); // Принудительно обновляем экран
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Успешный вход через Google')),
         );
@@ -104,6 +106,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
+              // Баннер статуса входа
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: isSignedIn
+                    ? Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset('assets/icons/google.png', height: 20),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Вход через Google выполнен',
+                              style: TextStyle(
+                                color: Color(0xFF225B6A),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Вход не выполнен',
+                            style: TextStyle(
+                              color: Color(0xFFB00020),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(16),
@@ -153,6 +201,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       fontSize: 14,
                                       color: Colors.black54,
                                     ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Image.asset('assets/icons/google.png', height: 20),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        'Google-аккаунт привязан',
+                                        style: TextStyle(
+                                          color: Color(0xFF52B3B6),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
