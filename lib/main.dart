@@ -5,6 +5,7 @@ import 'package:habitgo/providers/user_provider.dart';
 import 'package:habitgo/screens/welcome_screen.dart';
 import 'package:habitgo/screens/home_screen.dart';
 import 'providers/recommendations_provider.dart';
+import 'package:habitgo/providers/category_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HabitProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => RecommendationsProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
       ],
       child: MaterialApp(
         title: 'HabitGo',

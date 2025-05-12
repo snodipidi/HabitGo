@@ -12,6 +12,8 @@ import 'package:habitgo/screens/schedule_screen.dart';
 import 'package:habitgo/screens/deferred_screen.dart';
 import 'package:habitgo/providers/recommendations_provider.dart';
 import 'package:habitgo/widgets/recommendations_section.dart';
+import 'package:habitgo/screens/create_habit_screen.dart';
+import 'package:habitgo/screens/edit_habit_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else if (index == 2) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const HabitDetailScreen()),
+        MaterialPageRoute(builder: (context) => const CreateHabitScreen()),
       );
     } else if (index == 3) {
       Navigator.of(context).push(
@@ -123,8 +125,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                     return _HabitListItem(
                                       habit: habit,
                                       index: index,
-                                      onTap: () => _showHabitDetails(context, habit),
                                       onDelete: () => _deleteHabit(habit),
+                                      onComplete: () {
+                                        habitProvider.markHabitComplete(habit.id, DateTime.now());
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Привычка отмечена как выполненная!')),
+                                        );
+                                      },
                                     );
                                   },
                                 ),
@@ -176,7 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
               showUnselectedLabels: true,
               type: BottomNavigationBarType.fixed,
               currentIndex: _selectedIndex,
-              onTap: _onItemTapped,
+              onTap: (index) {
+                _onItemTapped(index);
+              },
               elevation: 0,
               items: [
                 BottomNavigationBarItem(
@@ -184,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'assets/icons/icon-home.svg',
                     width: 24,
                     height: 24,
-                    color: _selectedIndex == 0 ? Colors.white : Colors.white60,
+                    color: _selectedIndex == 0 ? Colors.white60 : Colors.white,
                   ),
                   label: 'Мои хобби',
                 ),
@@ -192,16 +201,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.emoji_emotions),
                   label: 'Расписание',
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.add,
-                    size: 24,
-                    color: Colors.white,
-                  ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.add),
                   label: 'Добавить',
                 ),
                 const BottomNavigationBarItem(
-                  icon: Icon(Icons.hourglass_bottom),
+                  icon: Icon(Icons.access_time),
                   label: 'Отложенные',
                 ),
                 const BottomNavigationBarItem(
@@ -217,8 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showHabitDetails(BuildContext context, Habit habit) {
-    Navigator.push(
-      context,
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => HabitDetailScreen(habit: habit),
       ),
@@ -234,137 +238,128 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HabitListItem extends StatelessWidget {
   final Habit habit;
   final int index;
-  final VoidCallback onTap;
   final VoidCallback onDelete;
+  final VoidCallback onComplete;
 
   const _HabitListItem({
-    Key? key,
     required this.habit,
     required this.index,
-    required this.onTap,
     required this.onDelete,
-  }) : super(key: key);
+    required this.onComplete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Slidable(
-        key: ValueKey(habit.id),
-        startActionPane: ActionPane(
-          motion: const DrawerMotion(),
-          extentRatio: 0.8,
-          children: [
-            SlidableAction(
-              onPressed: (_) {
-                final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-                habitProvider.markHabitComplete(habit.id, DateTime.now());
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Привычка отмечена как выполненная!')),
-                );
-              },
-              backgroundColor: const Color(0xFF52B3B6),
-              foregroundColor: Colors.white,
-              icon: Icons.check_circle_outline_rounded,
-              label: '',
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-              autoClose: true,
-              flex: 1,
-              spacing: 0,
-            ),
-            SlidableAction(
-              onPressed: (_) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => HabitDetailScreen(habit: habit),
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFF225B6A),
-              foregroundColor: Colors.white,
-              icon: Icons.edit_outlined,
-              label: '',
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-              autoClose: true,
-              flex: 1,
-              spacing: 0,
-            ),
-          ],
-        ),
-        endActionPane: ActionPane(
-          motion: const DrawerMotion(),
-          extentRatio: 0.4,
-          children: [
-            SlidableAction(
-              onPressed: (_) => onDelete(),
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              icon: Icons.delete_outline_rounded,
-              label: '',
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-              autoClose: true,
-              flex: 1,
-              spacing: 0,
-            ),
-          ],
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(230),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(25),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
+    return Slidable(
+      key: ValueKey(habit.id),
+      startActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.8,
+        children: [
+          SlidableAction(
+            onPressed: (_) => onComplete(),
+            backgroundColor: const Color(0xFF52B3B6),
+            foregroundColor: Colors.white,
+            icon: Icons.check_circle_outline_rounded,
+            label: '',
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+            autoClose: true,
+            flex: 1,
+            spacing: 0,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      habit.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF225B6A),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Row(
-                      children: [
-                        Icon(Icons.access_time, size: 32, color: Color(0xFF225B6A)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Сегодня',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF225B6A),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+          SlidableAction(
+            onPressed: (_) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => EditHabitScreen(habit: habit),
                 ),
-              ),
-              Row(
-                children: List.generate(3, (i) => const Icon(
-                  Icons.star,
-                  color: Color(0xFF52B3B6),
-                  size: 36,
-                )),
-              ),
-            ],
+              );
+            },
+            backgroundColor: const Color(0xFF225B6A),
+            foregroundColor: Colors.white,
+            icon: Icons.edit_outlined,
+            label: '',
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+            autoClose: true,
+            flex: 1,
+            spacing: 0,
           ),
+        ],
+      ),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.4,
+        children: [
+          SlidableAction(
+            onPressed: (_) => onDelete(),
+            backgroundColor: Colors.red.shade400,
+            foregroundColor: Colors.white,
+            icon: Icons.delete_outline_rounded,
+            label: '',
+            borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+            autoClose: true,
+            flex: 1,
+            spacing: 0,
+          ),
+        ],
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    habit.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF225B6A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Сегодня к ${habit.reminderTime.format(context)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: List.generate(3, (i) => const Icon(
+                Icons.star,
+                color: Color(0xFF52B3B6),
+                size: 22,
+              )),
+            ),
+          ],
         ),
       ),
     );

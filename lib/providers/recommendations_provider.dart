@@ -33,7 +33,7 @@ class RecommendationsProvider with ChangeNotifier {
     } else {
       _recommendations = [
         Recommendation(text: 'Пейте больше воды, она помогает жить'),
-        Recommendation(text: 'Сделайте небольшую разминку каждые 30 минут'),
+        Recommendation(text: 'Делайте небольшую разминку каждые 30 минут'),
         Recommendation(text: 'Не забывайте про осанку во время работы'),
         Recommendation(text: 'Съешьте что-нибудь полезное'),
         Recommendation(text: 'Сделайте перерыв и прогуляйтесь'),

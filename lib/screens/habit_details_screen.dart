@@ -3,10 +3,10 @@ import 'package:habitgo/models/habit.dart';
 import 'package:habitgo/screens/edit_habit_screen.dart';
 import 'package:habitgo/widgets/calendar_widget.dart';
 
-class HabitDetailScreen extends StatelessWidget {
+class HabitDetailsScreen extends StatelessWidget {
   final Habit habit;
 
-  const HabitDetailScreen({
+  const HabitDetailsScreen({
     super.key,
     required this.habit,
   });

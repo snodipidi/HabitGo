@@ -1,47 +1,54 @@
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
+import 'package:habitgo/models/category.dart';
 
 class Habit {
   final String id;
   final String title;
   final String description;
   final List<DateTime> completedDates;
-  final int targetDaysPerWeek;
+  final List<int> selectedWeekdays; // 1 = Monday, 7 = Sunday
   final TimeOfDay reminderTime;
   final bool isActive;
   final bool isCompleted;
+  final Category category;
 
   Habit({
     String? id,
     required this.title,
     required this.description,
     List<DateTime>? completedDates,
-    required this.targetDaysPerWeek,
+    List<int>? selectedWeekdays,
     required this.reminderTime,
     this.isActive = true,
     this.isCompleted = false,
+    Category? category,
   })  : id = id ?? const Uuid().v4(),
-        completedDates = completedDates ?? [];
+        completedDates = completedDates ?? [],
+        selectedWeekdays = selectedWeekdays ?? [1, 3, 5], // По умолчанию: понедельник, среда, пятница
+        category = category ?? Category(label: 'Чтение', icon: Icons.book);
 
   Habit copyWith({
     String? id,
     String? title,
     String? description,
     List<DateTime>? completedDates,
-    int? targetDaysPerWeek,
+    List<int>? selectedWeekdays,
     TimeOfDay? reminderTime,
     bool? isActive,
     bool? isCompleted,
+    Category? category,
   }) {
     return Habit(
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       completedDates: completedDates ?? this.completedDates,
-      targetDaysPerWeek: targetDaysPerWeek ?? this.targetDaysPerWeek,
+      selectedWeekdays: selectedWeekdays ?? this.selectedWeekdays,
       reminderTime: reminderTime ?? this.reminderTime,
       isActive: isActive ?? this.isActive,
       isCompleted: isCompleted ?? this.isCompleted,
+      category: category ?? this.category,
     );
   }
 
@@ -81,7 +88,7 @@ class Habit {
   }
 
   double getWeeklyProgress() {
-    return getCompletedDaysThisWeek() / targetDaysPerWeek;
+    return getCompletedDaysThisWeek() / selectedWeekdays.length;
   }
 
   Map<String, dynamic> toJson() {
@@ -90,10 +97,11 @@ class Habit {
       'title': title,
       'description': description,
       'completedDates': completedDates.map((date) => date.toIso8601String()).toList(),
-      'targetDaysPerWeek': targetDaysPerWeek,
+      'selectedWeekdays': selectedWeekdays,
       'reminderTime': '${reminderTime.hour}:${reminderTime.minute}',
       'isActive': isActive,
       'isCompleted': isCompleted,
+      'category': category.toJson(),
     };
   }
 
@@ -105,10 +113,11 @@ class Habit {
       completedDates: (json['completedDates'] as List)
           .map((date) => DateTime.parse(date as String))
           .toList(),
-      targetDaysPerWeek: json['targetDaysPerWeek'] as int,
+      selectedWeekdays: (json['selectedWeekdays'] as List).map((day) => day as int).toList(),
       reminderTime: _parseTimeOfDay(json['reminderTime'] as String),
       isActive: json['isActive'] as bool,
       isCompleted: json['isCompleted'] as bool,
+      category: Category.fromJson(json['category'] as Map<String, dynamic>),
     );
   }
 

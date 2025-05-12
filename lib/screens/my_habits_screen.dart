@@ -4,6 +4,7 @@ import 'package:habitgo/providers/habit_provider.dart';
 import 'package:habitgo/models/habit.dart';
 import 'package:habitgo/screens/habit_detail_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:habitgo/screens/edit_habit_screen.dart';
 
 class MyHabitsScreen extends StatelessWidget {
   const MyHabitsScreen({super.key});
@@ -67,7 +68,6 @@ class MyHabitsScreen extends StatelessWidget {
                           return _HabitListItem(
                             habit: habit,
                             index: index,
-                            onTap: () => _showHabitDetails(context, habit),
                             onDelete: () => _deleteHabit(context, habit),
                           );
                         },
@@ -98,21 +98,50 @@ class MyHabitsScreen extends StatelessWidget {
 class _HabitListItem extends StatelessWidget {
   final Habit habit;
   final int index;
-  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const _HabitListItem({
     Key? key,
     required this.habit,
     required this.index,
-    required this.onTap,
     required this.onDelete,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (habit.description.isNotEmpty) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: const Color(0xFFE1FFFC),
+              title: const Text(
+                'Цель/мини-задача',
+                style: TextStyle(
+                  color: Color(0xFF225B6A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+              ),
+              content: Text(
+                habit.description,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Закрыть', style: TextStyle(color: Color(0xFF52B3B6))),
+                ),
+              ],
+            ),
+          );
+        }
+      },
       child: Slidable(
         key: ValueKey(habit.id),
         startActionPane: ActionPane(
@@ -141,7 +170,7 @@ class _HabitListItem extends StatelessWidget {
               onPressed: (_) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => HabitDetailScreen(habit: habit),
+                    builder: (context) => EditHabitScreen(habit: habit),
                   ),
                 );
               },
@@ -203,6 +232,17 @@ class _HabitListItem extends StatelessWidget {
                         color: Color(0xFF225B6A),
                       ),
                     ),
+                    if (habit.description.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        habit.description,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF225B6A),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     const Row(
                       children: [
