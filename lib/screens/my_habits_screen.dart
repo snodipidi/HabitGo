@@ -5,13 +5,45 @@ import 'package:habitgo/models/habit.dart';
 import 'package:habitgo/screens/habit_detail_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:habitgo/screens/edit_habit_screen.dart';
+import 'package:habitgo/providers/category_provider.dart';
 
-class MyHabitsScreen extends StatelessWidget {
+class MyHabitsScreen extends StatefulWidget {
   const MyHabitsScreen({super.key});
+
+  @override
+  State<MyHabitsScreen> createState() => _MyHabitsScreenState();
+}
+
+class _MyHabitsScreenState extends State<MyHabitsScreen> {
+  String? _selectedCategory;
+  String _sortBy = 'time'; // 'time' or 'name'
+
+  List<Habit> _getFilteredAndSortedHabits(List<Habit> habits) {
+    // First filter by category if one is selected
+    var filteredHabits = _selectedCategory == null
+        ? habits
+        : habits.where((habit) => habit.category.label == _selectedCategory).toList();
+
+    // Then sort the filtered habits
+    if (_sortBy == 'time') {
+      filteredHabits.sort((a, b) {
+        final aTime = a.reminderTime.hour * 60 + a.reminderTime.minute;
+        final bTime = b.reminderTime.hour * 60 + b.reminderTime.minute;
+        return aTime.compareTo(bTime);
+      });
+    } else {
+      filteredHabits.sort((a, b) => a.title.compareTo(b.title));
+    }
+
+    return filteredHabits;
+  }
 
   @override
   Widget build(BuildContext context) {
     final habitProvider = Provider.of<HabitProvider>(context, listen: true);
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: true);
+    final activeHabits = habitProvider.activeHabits;
+    final filteredHabits = _getFilteredAndSortedHabits(activeHabits);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -45,30 +77,112 @@ class MyHabitsScreen extends StatelessWidget {
                         color: Color(0xFF225B6A),
                       ),
                     ),
+                    const Spacer(),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.sort, color: Color(0xFF225B6A)),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'time',
+                          child: Text('По времени'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'name',
+                          child: Text('По названию'),
+                        ),
+                      ],
+                      onSelected: (value) {
+                        setState(() {
+                          _sortBy = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              // Category filter chips
+              SizedBox(
+                height: 50,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    FilterChip(
+                      label: const Text('Все'),
+                      selected: _selectedCategory == null,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedCategory = null;
+                        });
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: const Color(0xFF52B3B6),
+                      labelStyle: TextStyle(
+                        color: _selectedCategory == null ? Colors.white : const Color(0xFF225B6A),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ...categoryProvider.categories.map((category) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                category.icon,
+                                size: 18,
+                                color: _selectedCategory == category.label
+                                    ? Colors.white
+                                    : const Color(0xFF52B3B6),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(category.label),
+                            ],
+                          ),
+                          selected: _selectedCategory == category.label,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = selected ? category.label : null;
+                            });
+                          },
+                          backgroundColor: Colors.white,
+                          selectedColor: const Color(0xFF52B3B6),
+                          labelStyle: TextStyle(
+                            color: _selectedCategory == category.label
+                                ? Colors.white
+                                : const Color(0xFF225B6A),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ],
                 ),
               ),
               Expanded(
-                child: habitProvider.activeHabits.isEmpty
-                    ? const Center(
+                child: filteredHabits.isEmpty
+                    ? Center(
                         child: Text(
-                          'Нет активных привычек.',
-                          style: TextStyle(
+                          _selectedCategory == null
+                              ? 'Нет активных привычек'
+                              : 'Нет привычек в категории "${_selectedCategory}"',
+                          style: const TextStyle(
                             fontSize: 16,
                             color: Colors.black54,
                           ),
                         ),
                       )
-                    : ListView.separated(
+                    : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: habitProvider.activeHabits.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemCount: filteredHabits.length,
                         itemBuilder: (context, index) {
-                          final habit = habitProvider.activeHabits[index];
-                          return _HabitListItem(
-                            habit: habit,
-                            index: index,
-                            onDelete: () => _deleteHabit(context, habit),
+                          final habit = filteredHabits[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _HabitListItem(
+                              habit: habit,
+                              index: index,
+                              onDelete: () => _deleteHabit(context, habit),
+                            ),
                           );
                         },
                       ),
