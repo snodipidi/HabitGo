@@ -177,10 +177,12 @@ class _HomeScreenState extends State<HomeScreen> {
               topRight: Radius.circular(20),
             ),
             child: BottomNavigationBar(
+              iconSize: 26,
               backgroundColor: Colors.transparent,
-              selectedItemColor: Colors.white,
-              unselectedItemColor: Colors.white60,
-              showUnselectedLabels: true,
+              selectedItemColor: Colors.white70,
+              unselectedItemColor: Colors.white70,
+              showSelectedLabels: false,
+              showUnselectedLabels: false,
               type: BottomNavigationBarType.fixed,
               currentIndex: _selectedIndex,
               onTap: (index) {
@@ -189,32 +191,44 @@ class _HomeScreenState extends State<HomeScreen> {
               elevation: 0,
               items: [
                 BottomNavigationBarItem(
-                  icon: SvgPicture.asset(
-                    'assets/icons/icon-home.svg',
-                    width: 24,
-                    height: 24,
-                    color: _selectedIndex == 0 ? Colors.white60 : Colors.white,
+                  icon: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SvgPicture.asset(
+                      'assets/icons/sweep.svg',
+                      width: 26,
+                      height: 26,
+                      color: Colors.white70,
+                    ),
                   ),
-                  label: 'Мои хобби',
+                  label: '',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.emoji_emotions),
-                  label: 'Расписание',
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.event_note),
+                  label: '',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.add),
-                  label: 'Добавить',
+                BottomNavigationBarItem(
+                  icon: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SvgPicture.asset(
+                      'assets/icons/glyph.svg',
+                      width: 30,
+                      height: 30,
+                      color: Colors.white,
+                    ),
+                  ),
+                  label: '',
                 ),
-                const BottomNavigationBarItem(
+                BottomNavigationBarItem(
                   icon: Icon(Icons.archive_outlined),
-                  label: 'Архив',
+                  label: '',
                 ),
-                const BottomNavigationBarItem(
+                BottomNavigationBarItem(
                   icon: Icon(Icons.settings),
-                  label: 'Настройки',
+                  label: '',
                 ),
               ],
             ),
+
           ),
         ),
       ),
