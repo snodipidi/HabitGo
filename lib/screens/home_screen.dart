@@ -341,6 +341,12 @@ class _HabitListItem extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Icon(
+                habit.category.icon,
+                color: Color(0xFF52B3B6),
+                size: 24,
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   habit.title,
@@ -353,7 +359,7 @@ class _HabitListItem extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '+${UserLevel.baseXpPerTask} XP',
+                '+${habit.calculateXp()} XP',
                 style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF52B3B6),

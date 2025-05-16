@@ -153,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
                           userProvider.updateUserName(result.user?.displayName ?? 'Пользователь');
                         }
                       },
-                      icon: const Icon(Icons.g_mobiledata, color: Color(0xFF52B3B6)),
+                      icon: Image.asset('assets/icons/google.png', height: 24),
                       label: const Text('Войти через Google', style: TextStyle(color: Color(0xFF225B6A))),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,

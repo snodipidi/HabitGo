@@ -24,6 +24,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
   late TimeOfDay _selectedTime;
   late Category _selectedCategory;
   late List<int> _selectedWeekdays;
+  late HabitDuration _selectedDuration;
 
   final List<String> _weekdays = [
     'Пн',
@@ -43,6 +44,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
     _selectedTime = widget.habit.reminderTime;
     _selectedCategory = widget.habit.category;
     _selectedWeekdays = List.from(widget.habit.selectedWeekdays);
+    _selectedDuration = widget.habit.duration;
   }
 
   @override
@@ -296,6 +298,56 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                   onTap: _selectTime,
                                 ),
                               ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Длительность',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF225B6A),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: HabitDuration.values.map((d) {
+                                  return Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedDuration = d;
+                                        });
+                                      },
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                                        decoration: BoxDecoration(
+                                          color: _selectedDuration == d ? Color(0xFF52B3B6) : Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Color(0xFF52B3B6)),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              d == HabitDuration.easy ? Icons.timer : d == HabitDuration.medium ? Icons.timelapse : Icons.hourglass_full,
+                                              color: _selectedDuration == d ? Colors.white : Color(0xFF52B3B6),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              d.label,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: _selectedDuration == d ? Colors.white : Color(0xFF225B6A),
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                               const SizedBox(height: 36),
                               SizedBox(
                                 height: 60,
@@ -312,6 +364,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                           selectedWeekdays: _selectedWeekdays,
                                           reminderTime: _selectedTime,
                                           category: _selectedCategory,
+                                          duration: _selectedDuration,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).updateHabit(updatedHabit);
                                         Navigator.pop(context, updatedHabit);
