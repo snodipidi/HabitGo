@@ -10,12 +10,14 @@ class CategorySelectionScreen extends StatefulWidget {
 
 class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
   final List<Category> _categories = [
-    Category(label: 'Чтение', icon: Icons.book),
-    Category(label: 'Спорт', icon: Icons.fitness_center),
-    Category(label: 'Программирование', icon: Icons.code),
-    Category(label: 'Рисование', icon: Icons.brush),
-    Category(label: 'Изучение языков', icon: Icons.language),
-    Category(label: 'Здоровье', icon: Icons.favorite),
+    Category(label: 'Физическое здоровье', icon: Icons.fitness_center),
+    Category(label: 'Психическое здоровье', icon: Icons.self_improvement),
+    Category(label: 'Самообразование', icon: Icons.school),
+    Category(label: 'Творчество', icon: Icons.brush),
+    Category(label: 'Навыки и карьера', icon: Icons.work_outline),
+    Category(label: 'Быт и дисциплина', icon: Icons.home),
+    Category(label: 'Социальные действия', icon: Icons.people_outline),
+    Category(label: 'Развлечения с пользой', icon: Icons.extension),
     Category(label: 'Другое', icon: Icons.more_horiz),
   ];
 

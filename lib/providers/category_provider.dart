@@ -5,11 +5,14 @@ import 'package:habitgo/models/category.dart';
 
 class CategoryProvider with ChangeNotifier {
   List<Category> _categories = [
-    Category(label: 'Чтение', icon: Icons.book),
-    Category(label: 'Спорт', icon: Icons.fitness_center),
-    Category(label: 'Музыка', icon: Icons.music_note),
-    Category(label: 'Медитация', icon: Icons.self_improvement),
-    Category(label: 'Учёба', icon: Icons.school),
+    Category(label: 'Физическое здоровье', icon: Icons.fitness_center),
+    Category(label: 'Психическое здоровье', icon: Icons.self_improvement),
+    Category(label: 'Самообразование', icon: Icons.school),
+    Category(label: 'Творчество', icon: Icons.brush),
+    Category(label: 'Навыки и карьера', icon: Icons.work_outline),
+    Category(label: 'Быт и дисциплина', icon: Icons.home),
+    Category(label: 'Социальные действия', icon: Icons.people_outline),
+    Category(label: 'Развлечения с пользой', icon: Icons.extension),
     Category(label: 'Другое', icon: Icons.more_horiz),
   ];
 

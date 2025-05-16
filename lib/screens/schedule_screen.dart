@@ -29,15 +29,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
     super.dispose();
   }
 
+  List<Habit> _getHabitsForDay(DateTime? day, List<Habit> habits) {
+    if (day == null) return [];
+    return habits.where((habit) {
+      final isDayOfWeek = habit.selectedWeekdays.contains(day.weekday);
+      final isBeforeDeadline = habit.deadline == null || !day.isAfter(habit.deadline!);
+      final isAfterCreated = !day.isBefore(habit.createdAt);
+      return isDayOfWeek && isBeforeDeadline && isAfterCreated;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final habitProvider = Provider.of<HabitProvider>(context);
     final habits = habitProvider.habits;
-    final selectedHabits = habits.where((habit) {
-      // Показываем привычки, если выбранный день совпадает с одним из выбранных дней недели привычки
-      if (_selectedDay == null) return false;
-      return habit.selectedWeekdays.contains(_selectedDay!.weekday);
-    }).toList();
+    final selectedHabits = _getHabitsForDay(_selectedDay, habits);
 
     return Scaffold(
       appBar: AppBar(
@@ -104,65 +110,73 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
   Widget _buildCalendarView(CalendarFormat format, List<Habit> habits) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: TableCalendar(
-        firstDay: DateTime.utc(2020, 1, 1),
-        lastDay: DateTime.utc(2100, 12, 31),
-        focusedDay: _focusedDay,
-        calendarFormat: format,
-        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-        },
-        calendarStyle: CalendarStyle(
-          todayDecoration: BoxDecoration(
-            color: const Color(0xFF52B3B6).withOpacity(0.3),
-            shape: BoxShape.circle,
+      child: Column(
+        children: [
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2100, 12, 31),
+            focusedDay: _focusedDay,
+            calendarFormat: format,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            },
+            calendarStyle: CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: const Color(0xFF52B3B6).withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: const BoxDecoration(
+                color: Color(0xFF52B3B6),
+                shape: BoxShape.circle,
+              ),
+              selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            headerStyle: const HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+              titleTextStyle: TextStyle(fontSize: 18, color: Color(0xFF225B6A), fontWeight: FontWeight.bold),
+            ),
+            daysOfWeekStyle: const DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: Color(0xFF225B6A)),
+              weekendStyle: TextStyle(color: Color(0xFF225B6A)),
+            ),
+            onPageChanged: (focusedDay) {
+              setState(() {
+                _focusedDay = focusedDay;
+              });
+            },
+            eventLoader: (day) {
+              // Для выделения дней с привычками
+              return _getHabitsForDay(day, habits);
+            },
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, events) {
+                if (events.isNotEmpty) {
+                  return Positioned(
+                    bottom: 1,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF225B6A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                }
+                return null;
+              },
+            ),
           ),
-          selectedDecoration: const BoxDecoration(
-            color: Color(0xFF52B3B6),
-            shape: BoxShape.circle,
+          const SizedBox(height: 16),
+          Expanded(
+            child: _buildDayView(_getHabitsForDay(_selectedDay, habits)),
           ),
-          selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        headerStyle: const HeaderStyle(
-          formatButtonVisible: false,
-          titleCentered: true,
-          titleTextStyle: TextStyle(fontSize: 18, color: Color(0xFF225B6A), fontWeight: FontWeight.bold),
-        ),
-        daysOfWeekStyle: const DaysOfWeekStyle(
-          weekdayStyle: TextStyle(color: Color(0xFF225B6A)),
-          weekendStyle: TextStyle(color: Color(0xFF225B6A)),
-        ),
-        onPageChanged: (focusedDay) {
-          setState(() {
-            _focusedDay = focusedDay;
-          });
-        },
-        eventLoader: (day) {
-          // Для выделения дней с привычками
-          return habits.where((habit) => habit.selectedWeekdays.contains(day.weekday)).toList();
-        },
-        calendarBuilders: CalendarBuilders(
-          markerBuilder: (context, date, events) {
-            if (events.isNotEmpty) {
-              return Positioned(
-                bottom: 1,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF225B6A),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              );
-            }
-            return null;
-          },
-        ),
+        ],
       ),
     );
   }

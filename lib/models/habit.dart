@@ -44,6 +44,7 @@ class Habit {
   final Category category;
   final HabitDuration duration;
   final DateTime? deadline;
+  final DateTime createdAt;
 
   Habit({
     String? id,
@@ -57,10 +58,12 @@ class Habit {
     Category? category,
     this.duration = HabitDuration.easy, // по умолчанию Лёгкое
     this.deadline,
+    DateTime? createdAt,
   })  : id = id ?? const Uuid().v4(),
         completedDates = completedDates ?? [],
         selectedWeekdays = selectedWeekdays ?? [1, 3, 5], // По умолчанию: понедельник, среда, пятница
-        category = category ?? Category(label: 'Чтение', icon: Icons.book);
+        category = category ?? Category(label: 'Чтение', icon: Icons.book),
+        createdAt = createdAt ?? DateTime.now();
 
   Habit copyWith({
     String? id,
@@ -74,6 +77,7 @@ class Habit {
     Category? category,
     HabitDuration? duration,
     DateTime? deadline,
+    DateTime? createdAt,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -87,6 +91,7 @@ class Habit {
       category: category ?? this.category,
       duration: duration ?? this.duration,
       deadline: deadline ?? this.deadline,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -142,6 +147,7 @@ class Habit {
       'category': category.toJson(),
       'duration': duration.index,
       'deadline': deadline?.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
@@ -164,6 +170,9 @@ class Habit {
       deadline: json['deadline'] != null && json['deadline'] != ''
           ? DateTime.tryParse(json['deadline'])
           : null,
+      createdAt: json['createdAt'] != null && json['createdAt'] != ''
+          ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 
