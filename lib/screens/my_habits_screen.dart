@@ -6,6 +6,7 @@ import 'package:habitgo/screens/habit_detail_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:habitgo/screens/edit_habit_screen.dart';
 import 'package:habitgo/providers/category_provider.dart';
+import 'package:habitgo/models/user_level.dart';
 
 class MyHabitsScreen extends StatefulWidget {
   const MyHabitsScreen({super.key});
@@ -317,71 +318,65 @@ class _HabitListItem extends StatelessWidget {
             ),
           ],
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(230),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(25),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+        child: SizedBox(
+          width: double.infinity,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(230),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      habit.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF225B6A),
+                    Expanded(
+                      child: Text(
+                        habit.title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF225B6A),
+                        ),
+                        softWrap: true,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (habit.description.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        habit.description,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF225B6A),
-                          fontStyle: FontStyle.italic,
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '+${UserLevel.baseXpPerTask} XP',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF52B3B6),
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                    const SizedBox(height: 8),
-                    const Row(
-                      children: [
-                        Icon(Icons.access_time, size: 32, color: Color(0xFF225B6A)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Сегодня',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF225B6A),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ),
-              Row(
-                children: List.generate(3, (i) => const Icon(
-                  Icons.star,
-                  color: Color(0xFF52B3B6),
-                  size: 36,
-                )),
-              ),
-            ],
+                if (habit.description.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    habit.description,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF225B6A),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

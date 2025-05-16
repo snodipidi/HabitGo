@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:habitgo/models/habit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:habitgo/providers/level_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:habitgo/main.dart';
 
 class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
@@ -65,6 +68,10 @@ class HabitProvider with ChangeNotifier {
       _habits[index].completeForDate(date);
       _saveHabits();
       notifyListeners();
+
+      // Award XP for completing the habit
+      final levelProvider = Provider.of<LevelProvider>(navigatorKey.currentContext!, listen: false);
+      levelProvider.completeTask();
     }
   }
 

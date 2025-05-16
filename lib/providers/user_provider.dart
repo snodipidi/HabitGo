@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:habitgo/models/user.dart';
+import 'package:habitgo/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class UserProvider with ChangeNotifier {
   User? _user;
@@ -11,12 +13,10 @@ class UserProvider with ChangeNotifier {
 
   String get userName => user?.name ?? 'Пользователь';
 
-  void updateUserName(String newName) {
-    if (_user != null) {
-      _user = User(name: newName);
-      notifyListeners();
-    }
-  }
+  final AuthService _authService = AuthService();
+
+  bool _isGoogleSignedIn = false;
+  bool get isGoogleSignedIn => _isGoogleSignedIn;
 
   Future<void> initializeUser() async {
     if (_isLoading) return;
@@ -25,7 +25,21 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Проверяем Google-авторизацию через Firebase
+      final firebaseUser = firebase_auth.FirebaseAuth.instance.currentUser;
+      _isGoogleSignedIn = firebaseUser != null;
+
+      // Сначала проверяем, есть ли сохраненные данные пользователя
       _user = await User.loadFromPrefs();
+      
+      // Если нет, проверяем авторизацию через Google
+      if (_user == null && _isGoogleSignedIn) {
+        final userData = await _authService.getSavedUserData();
+        if (userData['user_name'] != null) {
+          _user = User(name: userData['user_name']!);
+          await _user!.saveToPrefs();
+        }
+      }
     } catch (e) {
       debugPrint('Error initializing user: $e');
     } finally {
@@ -49,6 +63,44 @@ class UserProvider with ChangeNotifier {
       await _user!.saveToPrefs();
     } catch (e) {
       debugPrint('Error setting user name: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateUserName(String newName) async {
+    if (_isLoading) return;
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      if (_user == null) {
+        _user = User(name: newName);
+      } else {
+        _user!.name = newName;
+      }
+      await _user!.saveToPrefs();
+    } catch (e) {
+      debugPrint('Error updating user name: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> signOut() async {
+    if (_isLoading) return;
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _authService.signOut();
+      await clearUserData();
+    } catch (e) {
+      debugPrint('Error signing out: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

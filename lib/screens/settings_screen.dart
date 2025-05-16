@@ -1,369 +1,336 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:habitgo/providers/level_provider.dart';
 import 'package:habitgo/providers/user_provider.dart';
+import 'package:habitgo/widgets/level_progress_circle.dart';
 import 'package:habitgo/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  final AuthService _authService = AuthService();
-  bool _isLoading = false;
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final userCredential = await _authService.signInWithGoogle();
-      if (userCredential != null && mounted) {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        await userProvider.setUserName(userCredential.user?.displayName ?? 'Пользователь');
-        print('currentUser: \\${_authService.currentUser}');
-        setState(() {}); // Принудительно обновляем экран
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Успешный вход через Google')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ошибка входа через Google')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _signOut() async {
-    setState(() => _isLoading = true);
-    try {
-      await _authService.signOut();
-      if (mounted) {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        await userProvider.setUserName('Пользователь');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Выход выполнен успешно')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ошибка при выходе')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final levelProvider = Provider.of<LevelProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
-    final authService = _authService;
-    final isSignedIn = authService.currentUser != null;
+    final userLevel = levelProvider.userLevel;
+    final authService = AuthService();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
               Color(0xFFE1FFFC),
-              Color(0xFF00A0A6),
+              Color(0xFF52B3B6),
             ],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF225B6A)),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    const Text(
-                      'Настройки',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF225B6A),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  // Стрелка назад и заголовок
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF225B6A)),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              // Баннер статуса входа
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: isSignedIn
-                    ? Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset('assets/icons/google.png', height: 20),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Вход через Google выполнен',
-                              style: TextStyle(
-                                color: Color(0xFF225B6A),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Вход не выполнен',
-                            style: TextStyle(
-                              color: Color(0xFFB00020),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // User profile section
-                    if (isSignedIn) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundImage: authService.currentUser?.photoURL != null
-                                  ? NetworkImage(authService.currentUser!.photoURL!)
-                                  : null,
-                              child: authService.currentUser?.photoURL == null
-                                  ? const Icon(Icons.person, size: 30)
-                                  : null,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    authService.currentUser?.displayName ?? 'Пользователь',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF225B6A),
-                                    ),
-                                  ),
-                                  Text(
-                                    authService.currentUser?.email ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Image.asset('assets/icons/google.png', height: 20),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'Google-аккаунт привязан',
-                                        style: TextStyle(
-                                          color: Color(0xFF52B3B6),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    // Authentication buttons
-                    if (!isSignedIn) ...[
-                      ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _signInWithGoogle,
-                        icon: Image.asset('assets/icons/google.png', height: 24),
-                        label: const Text('Войти через Google'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF225B6A),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ] else ...[
-                      ElevatedButton.icon(
-                        onPressed: _isLoading ? null : _signOut,
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Выйти'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade400,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Настройки',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF225B6A),
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
-                    // Other settings
+                  ),
+                  const SizedBox(height: 24),
+                  // КРАСНАЯ ПЛАШКА ЕСЛИ НЕ ВЫПОЛНЕН ВХОД (СРАЗУ ПОД ЗАГОЛОВКОМ)
+                  if (!userProvider.isGoogleSignedIn) ...[
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        color: const Color(0xFFFFD6D6),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.person_outline, color: Color(0xFF225B6A)),
-                            title: const Text('Изменить имя'),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () async {
-                              final newName = await showDialog<String>(
-                                context: context,
-                                builder: (context) => _NameEditDialog(
-                                  initialName: userProvider.userName,
-                                ),
-                              );
-                              if (newName != null) {
-                                await userProvider.setUserName(newName);
-                              }
-                            },
+                      child: const Center(
+                        child: Text(
+                          'Вход не выполнен',
+                          style: TextStyle(
+                            color: Color(0xFFD32F2F),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
                           ),
-                          const Divider(),
-                          ListTile(
-                            leading: const Icon(Icons.notifications_outlined, color: Color(0xFF225B6A)),
-                            title: const Text('Уведомления'),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () {
-                              // TODO: Implement notifications settings
-                            },
-                          ),
-                          const Divider(),
-                          ListTile(
-                            leading: const Icon(Icons.color_lens_outlined, color: Color(0xFF225B6A)),
-                            title: const Text('Тема приложения'),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () {
-                              // TODO: Implement theme settings
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
-                ),
+                  // БЕЛАЯ КАРТОЧКА С УРОВНЕМ
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.07),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF52B3B6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              levelProvider.userLevel.level.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                levelProvider.userLevel.status,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF225B6A),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${levelProvider.userLevel.currentXp} XP / ${levelProvider.userLevel.xpToNextLevel} XP до уровня ${levelProvider.userLevel.level + 1}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF52B3B6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // КНОПКА GOOGLE
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final result = await authService.signInWithGoogle();
+                        if (result != null && context.mounted) {
+                          userProvider.updateUserName(result.user?.displayName ?? 'Пользователь');
+                        }
+                      },
+                      icon: const Icon(Icons.g_mobiledata, color: Color(0xFF52B3B6)),
+                      label: const Text('Войти через Google', style: TextStyle(color: Color(0xFF225B6A))),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // ОТДЕЛЬНАЯ КАРТОЧКА НАСТРОЕК
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.person_outline, color: Color(0xFF225B6A)),
+                          title: const Text('Изменить имя'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _showNameEditDialog(context),
+                        ),
+                        const Divider(height: 0),
+                        ListTile(
+                          leading: const Icon(Icons.notifications_outlined, color: Color(0xFF225B6A)),
+                          title: const Text('Уведомления'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {},
+                        ),
+                        const Divider(height: 0),
+                        ListTile(
+                          leading: const Icon(Icons.color_lens_outlined, color: Color(0xFF225B6A)),
+                          title: const Text('Тема приложения'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Достижения
+                  const Text(
+                    'Достижения',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF225B6A),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (userProvider.user?.achievements.isEmpty ?? true)
+                          const Center(
+                            child: Text(
+                              'Пока нет достижений',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        else
+                          ...userProvider.user!.achievements.map((achievement) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.emoji_events, color: Color(0xFF52B3B6)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  achievement,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF225B6A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-class _NameEditDialog extends StatefulWidget {
-  final String initialName;
-
-  const _NameEditDialog({required this.initialName});
-
-  @override
-  State<_NameEditDialog> createState() => _NameEditDialogState();
-}
-
-class _NameEditDialogState extends State<_NameEditDialog> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Изменить имя'),
-      content: TextField(
-        controller: _controller,
-        decoration: const InputDecoration(
-          hintText: 'Введите ваше имя',
-        ),
+  Widget _buildLevelInfo(String title, String range) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF225B6A),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            range,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+    );
+  }
+
+  Future<void> _showNameEditDialog(BuildContext context) async {
+    final TextEditingController nameController = TextEditingController(
+      text: Provider.of<UserProvider>(context, listen: false).user?.name ?? '',
+    );
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Изменить имя'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Ваше имя',
+            hintText: 'Введите новое имя',
+          ),
         ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: const Text('Сохранить'),
-        ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                Provider.of<UserProvider>(context, listen: false)
+                    .setUserName(nameController.text.trim());
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Сохранить'),
+          ),
+        ],
+      ),
     );
   }
 } 

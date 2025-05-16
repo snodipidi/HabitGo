@@ -14,6 +14,9 @@ import 'package:habitgo/providers/recommendations_provider.dart';
 import 'package:habitgo/widgets/recommendations_section.dart';
 import 'package:habitgo/screens/create_habit_screen.dart';
 import 'package:habitgo/screens/edit_habit_screen.dart';
+import 'package:habitgo/providers/level_provider.dart';
+import 'package:habitgo/widgets/level_progress_circle.dart';
+import 'package:habitgo/models/user_level.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -80,23 +83,76 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 24),
-                        Text(
-                          'Привет, $userName!',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF225B6A),
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(right: 16),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE1FFFC),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: const Color(0xFF52B3B6), width: 2),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        Provider.of<LevelProvider>(context).userLevel.level.toString(),
+                                        style: const TextStyle(
+                                          color: Color(0xFF225B6A),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    Provider.of<LevelProvider>(context).userLevel.status,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF52B3B6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Привет, $userName!',
+                                        style: const TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF225B6A),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Маленькие шаги ведут к большим переменам.',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF225B6A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Маленькие шаги ведут\nк большим переменам.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF225B6A),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 22),
                         const Text(
                           'Задания на день',
                           style: TextStyle(
@@ -279,14 +335,14 @@ class _HabitListItem extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
                   habit.title,
                   style: const TextStyle(
                     fontSize: 18,
@@ -294,29 +350,17 @@ class _HabitListItem extends StatelessWidget {
                     color: Color(0xFF225B6A),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Сегодня к ${habit.reminderTime.format(context)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black45,
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '+${UserLevel.baseXpPerTask} XP',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF52B3B6),
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
-          ),
-          Row(
-            children: List.generate(3, (i) => const Icon(
-              Icons.star,
-              color: Color(0xFF52B3B6),
-              size: 22,
-            )),
+              ),
+            ],
           ),
         ],
       ),
