@@ -20,6 +20,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
   Category _selectedCategory = Category(label: 'Чтение', icon: Icons.book);
   List<int> _selectedWeekdays = [1, 3, 5]; // По умолчанию: понедельник, среда, пятница
   HabitDuration _selectedDuration = HabitDuration.easy;
+  DateTime? _selectedDeadline;
 
   final List<String> _weekdays = [
     'Пн',
@@ -284,6 +285,52 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                 ),
                               ),
                               const SizedBox(height: 24),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFF52B3B6)),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(Icons.event, color: Color(0xFF52B3B6)),
+                                  title: const Text('Дедлайн', style: TextStyle(color: Color(0xFF52B3B6))),
+                                  subtitle: Text(
+                                    _selectedDeadline != null
+                                        ? '${_selectedDeadline!.day.toString().padLeft(2, '0')}.${_selectedDeadline!.month.toString().padLeft(2, '0')}.${_selectedDeadline!.year}'
+                                        : 'Без дедлайна',
+                                    style: const TextStyle(color: Color(0xFF225B6A)),
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (_selectedDeadline != null)
+                                        IconButton(
+                                          icon: const Icon(Icons.clear, color: Color(0xFF52B3B6)),
+                                          onPressed: () {
+                                            setState(() {
+                                              _selectedDeadline = null;
+                                            });
+                                          },
+                                        ),
+                                      Icon(Icons.arrow_forward_ios, color: Color(0xFF52B3B6)),
+                                    ],
+                                  ),
+                                  onTap: () async {
+                                    final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: _selectedDeadline ?? DateTime.now(),
+                                      firstDate: DateTime.now(),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (picked != null) {
+                                      setState(() {
+                                        _selectedDeadline = picked;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 24),
                               const Text(
                                 'Длительность',
                                 style: TextStyle(
@@ -350,6 +397,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                           reminderTime: _selectedTime,
                                           category: _selectedCategory,
                                           duration: _selectedDuration,
+                                          deadline: _selectedDeadline,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).addHabit(habit);
                                         Navigator.pop(context);

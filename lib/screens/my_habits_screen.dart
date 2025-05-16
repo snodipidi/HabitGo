@@ -261,7 +261,7 @@ class _HabitListItem extends StatelessWidget {
         key: ValueKey(habit.id),
         startActionPane: ActionPane(
           motion: const DrawerMotion(),
-          extentRatio: 0.8,
+          extentRatio: 0.5,
           children: [
             SlidableAction(
               onPressed: (_) {
@@ -276,7 +276,7 @@ class _HabitListItem extends StatelessWidget {
               icon: Icons.check_circle_outline_rounded,
               label: '',
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               autoClose: true,
               flex: 1,
               spacing: 0,
@@ -293,7 +293,7 @@ class _HabitListItem extends StatelessWidget {
               foregroundColor: Colors.white,
               icon: Icons.edit_outlined,
               label: '',
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               autoClose: true,
               flex: 1,
               spacing: 0,
@@ -302,7 +302,7 @@ class _HabitListItem extends StatelessWidget {
         ),
         endActionPane: ActionPane(
           motion: const DrawerMotion(),
-          extentRatio: 0.4,
+          extentRatio: 0.3,
           children: [
             SlidableAction(
               onPressed: (_) => onDelete(),
@@ -311,7 +311,7 @@ class _HabitListItem extends StatelessWidget {
               icon: Icons.delete_outline_rounded,
               label: '',
               borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               autoClose: true,
               flex: 1,
               spacing: 0,

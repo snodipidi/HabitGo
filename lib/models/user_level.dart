@@ -24,7 +24,14 @@ class UserLevel {
   }
 
   static int calculateXpToNextLevel(int currentLevel) {
-    return 1000 + (currentLevel * 200);
+    if (currentLevel == 1) return 100;
+    if (currentLevel == 2) return 150;
+    if (currentLevel == 3) return 200;
+    if (currentLevel == 4) return 250;
+    if (currentLevel == 5) return 300;
+    if (currentLevel == 6) return 350;
+    if (currentLevel >= 7) return 350 + (currentLevel - 6) * 50;
+    return 100; // fallback
   }
 
   UserLevel addXp(int xpGained) {

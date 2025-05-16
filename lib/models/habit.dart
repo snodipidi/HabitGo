@@ -43,6 +43,7 @@ class Habit {
   final bool isCompleted;
   final Category category;
   final HabitDuration duration;
+  final DateTime? deadline;
 
   Habit({
     String? id,
@@ -55,6 +56,7 @@ class Habit {
     this.isCompleted = false,
     Category? category,
     this.duration = HabitDuration.easy, // по умолчанию Лёгкое
+    this.deadline,
   })  : id = id ?? const Uuid().v4(),
         completedDates = completedDates ?? [],
         selectedWeekdays = selectedWeekdays ?? [1, 3, 5], // По умолчанию: понедельник, среда, пятница
@@ -71,6 +73,7 @@ class Habit {
     bool? isCompleted,
     Category? category,
     HabitDuration? duration,
+    DateTime? deadline,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -83,6 +86,7 @@ class Habit {
       isCompleted: isCompleted ?? this.isCompleted,
       category: category ?? this.category,
       duration: duration ?? this.duration,
+      deadline: deadline ?? this.deadline,
     );
   }
 
@@ -137,6 +141,7 @@ class Habit {
       'isCompleted': isCompleted,
       'category': category.toJson(),
       'duration': duration.index,
+      'deadline': deadline?.toIso8601String(),
     };
   }
 
@@ -156,6 +161,9 @@ class Habit {
       duration: json['duration'] != null
           ? HabitDuration.values[json['duration'] as int]
           : HabitDuration.easy,
+      deadline: json['deadline'] != null && json['deadline'] != ''
+          ? DateTime.tryParse(json['deadline'])
+          : null,
     );
   }
 
