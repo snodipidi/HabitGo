@@ -176,4 +176,11 @@ class UserProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> addCoins(int amount) async {
+    if (_user == null) return;
+    _user!.habitCoins += amount;
+    await _user!.saveToPrefs();
+    notifyListeners();
+  }
 } 

@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       index: index,
                                       onDelete: () => _deleteHabit(habit),
                                       onComplete: () {
-                                        habitProvider.markHabitComplete(habit.id, DateTime.now());
+                                        habitProvider.markHabitComplete(habit.id, DateTime.now(), habit.calculateXp());
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(content: Text('Привычка отмечена как выполненная!')),
                                         );

@@ -9,12 +9,14 @@ class User {
   String name;
   List<String> achievements;
   int streakDays;
+  int habitCoins;
   int _dataVersion;
 
   User({
     required this.name,
     this.achievements = const [],
     this.streakDays = 0,
+    this.habitCoins = 0,
     int? dataVersion,
   }) : _dataVersion = dataVersion ?? _currentDataVersion;
 
@@ -24,6 +26,7 @@ class User {
       'name': name,
       'achievements': achievements,
       'streakDays': streakDays,
+      'habitCoins': habitCoins,
     };
   }
 
@@ -42,6 +45,7 @@ class User {
       name: json['name'] as String,
       achievements: List<String>.from(json['achievements'] ?? []),
       streakDays: json['streakDays'] as int? ?? 0,
+      habitCoins: json['habitCoins'] as int? ?? 0,
     );
   }
 

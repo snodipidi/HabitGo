@@ -266,7 +266,7 @@ class _HabitListItem extends StatelessWidget {
             SlidableAction(
               onPressed: (_) {
                 final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-                habitProvider.markHabitComplete(habit.id, DateTime.now());
+                habitProvider.markHabitComplete(habit.id, DateTime.now(), habit.calculateXp());
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Привычка отмечена как выполненная!')),
                 );

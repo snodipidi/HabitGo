@@ -17,7 +17,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   TimeOfDay _selectedTime = const TimeOfDay(hour: 12, minute: 0);
-  Category _selectedCategory = Category(label: 'Чтение', icon: Icons.book);
+  Category _selectedCategory = Category(label: 'Выберите категорию', icon: Icons.category);
   List<int> _selectedWeekdays = [1, 3, 5]; // По умолчанию: понедельник, среда, пятница
   HabitDuration _selectedDuration = HabitDuration.easy;
   DateTime? _selectedDeadline;
@@ -390,6 +390,15 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                     borderRadius: BorderRadius.circular(16),
                                     onTap: () {
                                       if (_formKey.currentState!.validate()) {
+                                        if (_selectedCategory.label == 'Выберите категорию') {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Пожалуйста, выберите категорию'),
+                                              backgroundColor: Color(0xFF52B3B6),
+                                            ),
+                                          );
+                                          return;
+                                        }
                                         final habit = Habit(
                                           title: _titleController.text,
                                           description: _descriptionController.text,

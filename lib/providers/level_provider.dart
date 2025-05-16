@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_level.dart';
+import 'package:habitgo/providers/user_provider.dart';
 
 class LevelProvider with ChangeNotifier {
   UserLevel? _userLevel;
   static const String _levelKey = 'user_level';
   static const String _xpKey = 'user_xp';
+  UserProvider? _userProvider;
 
   LevelProvider() {
     _loadUserLevel();
@@ -27,12 +29,19 @@ class LevelProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> completeTask() async {
+  void setUserProvider(UserProvider userProvider) {
+    _userProvider = userProvider;
+  }
+
+  Future<void> completeTask(int xp) async {
     final prefs = await SharedPreferences.getInstance();
-    _userLevel = (_userLevel ?? UserLevel.initial()).addXp(UserLevel.baseXpPerTask);
-    
+    final prevLevel = _userLevel?.level ?? 1;
+    _userLevel = (_userLevel ?? UserLevel.initial()).addXp(xp);
     await prefs.setInt(_levelKey, _userLevel!.level);
     await prefs.setInt(_xpKey, _userLevel!.currentXp);
+    if (_userProvider != null && _userLevel!.level > prevLevel) {
+      _userProvider!.addCoins(20 * (_userLevel!.level - prevLevel));
+    }
     notifyListeners();
   }
 

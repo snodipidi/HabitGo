@@ -62,7 +62,7 @@ class Habit {
   })  : id = id ?? const Uuid().v4(),
         completedDates = completedDates ?? [],
         selectedWeekdays = selectedWeekdays ?? [1, 3, 5], // По умолчанию: понедельник, среда, пятница
-        category = category ?? Category(label: 'Чтение', icon: Icons.book),
+        category = category ?? Category(label: 'Выберите категорию', icon: Icons.category),
         createdAt = createdAt ?? DateTime.now();
 
   Habit copyWith({

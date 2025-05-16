@@ -4,6 +4,7 @@ import 'package:habitgo/providers/level_provider.dart';
 import 'package:habitgo/providers/user_provider.dart';
 import 'package:habitgo/widgets/level_progress_circle.dart';
 import 'package:habitgo/services/auth_service.dart';
+import 'package:habitgo/screens/shop_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -187,6 +188,17 @@ class SettingsScreen extends StatelessWidget {
                           title: const Text('Изменить имя'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => _showNameEditDialog(context),
+                        ),
+                        const Divider(height: 0),
+                        ListTile(
+                          leading: const Icon(Icons.store, color: Color(0xFF225B6A)),
+                          title: const Text('Магазин'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const ShopScreen()),
+                            );
+                          },
                         ),
                         const Divider(height: 0),
                         ListTile(

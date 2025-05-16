@@ -59,7 +59,7 @@ class HabitProvider with ChangeNotifier {
     }
   }
 
-  void markHabitComplete(String id, DateTime date) {
+  void markHabitComplete(String id, DateTime date, int xp) {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
       _habits[index] = _habits[index].copyWith(
@@ -71,7 +71,7 @@ class HabitProvider with ChangeNotifier {
 
       // Award XP for completing the habit
       final levelProvider = Provider.of<LevelProvider>(navigatorKey.currentContext!, listen: false);
-      levelProvider.completeTask();
+      levelProvider.completeTask(xp);
     }
   }
 
