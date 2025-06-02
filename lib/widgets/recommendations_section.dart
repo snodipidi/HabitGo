@@ -12,29 +12,56 @@ class RecommendationsSection extends StatelessWidget {
         if (provider.recommendations.isEmpty) {
           return const SizedBox.shrink();
         }
+
+        final recommendation = provider.currentRecommendation;
+        
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Рекомендации',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFFFFFFF),
-              ),
+            Row(
+              children: [
+                Icon(
+                  _getIconForCategory(recommendation.category),
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Рекомендация',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             Text(
-              provider.currentRecommendation.text,
+              recommendation.text,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.normal,
-                color: Color(0xFFFFFFFF),
+                color: Colors.white,
               ),
             ),
           ],
         );
       },
     );
+  }
+
+  IconData _getIconForCategory(String category) {
+    switch (category) {
+      case 'health':
+        return Icons.favorite_outline;
+      case 'wellness':
+        return Icons.spa_outlined;
+      case 'nutrition':
+        return Icons.restaurant_outlined;
+      case 'activity':
+        return Icons.directions_walk_outlined;
+      default:
+        return Icons.lightbulb_outline;
+    }
   }
 } 
