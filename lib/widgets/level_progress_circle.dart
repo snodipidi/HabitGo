@@ -18,52 +18,42 @@ class LevelProgressCircle extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 120,
-                  height: 120,
+                  width: 60,
+                  height: 60,
                   child: CircularProgressIndicator(
                     value: userLevel.getProgressPercentage(),
-                    strokeWidth: 12,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                    strokeWidth: 3,
+                    backgroundColor: const Color(0xFFE1FFFC),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF52B3B6)),
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Уровень',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    Text(
-                      '${userLevel.level}',
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE1FFFC),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF52B3B6), width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      userLevel.level.toString(),
                       style: const TextStyle(
-                        fontSize: 32,
+                        color: Color(0xFF225B6A),
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        fontSize: 24,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               userLevel.status,
               style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.blue,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${userLevel.currentXp}/${userLevel.xpToNextLevel} XP',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+                fontSize: 13,
+                color: Color(0xFF52B3B6),
               ),
             ),
           ],

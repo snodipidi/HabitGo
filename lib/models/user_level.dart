@@ -35,6 +35,7 @@ class UserLevel {
   }
 
   UserLevel addXp(int xpGained) {
+    print('Adding XP: $xpGained to current XP: $currentXp');
     int newXp = currentXp + xpGained;
     int newLevel = level;
     int newXpToNextLevel = xpToNextLevel;
@@ -45,6 +46,7 @@ class UserLevel {
       newXpToNextLevel = calculateXpToNextLevel(newLevel);
     }
 
+    print('New level: $newLevel, New XP: $newXp, XP to next level: $newXpToNextLevel');
     return UserLevel(
       level: newLevel,
       currentXp: newXp,
@@ -54,7 +56,9 @@ class UserLevel {
   }
 
   double getProgressPercentage() {
-    return currentXp / xpToNextLevel;
+    final progress = currentXp / xpToNextLevel;
+    print('Calculating progress: $currentXp / $xpToNextLevel = $progress');
+    return progress;
   }
 
   factory UserLevel.initial() {

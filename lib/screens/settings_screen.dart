@@ -100,46 +100,85 @@ class SettingsScreen extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF52B3B6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              levelProvider.userLevel.level.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ),
+                        Consumer<LevelProvider>(
+                          builder: (context, levelProvider, child) {
+                            final userLevel = levelProvider.userLevel;
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 60,
+                                      height: 60,
+                                      child: CircularProgressIndicator(
+                                        value: userLevel.getProgressPercentage(),
+                                        strokeWidth: 3,
+                                        backgroundColor: const Color(0xFFE1FFFC),
+                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF52B3B6)),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE1FFFC),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFF52B3B6), width: 2),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          userLevel.level.toString(),
+                                          style: const TextStyle(
+                                            color: Color(0xFF225B6A),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 24,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  userLevel.status,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF52B3B6),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                levelProvider.userLevel.status,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF225B6A),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${levelProvider.userLevel.currentXp} XP / ${levelProvider.userLevel.xpToNextLevel} XP до уровня ${levelProvider.userLevel.level + 1}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF52B3B6),
-                                ),
-                              ),
-                            ],
+                          child: Consumer<LevelProvider>(
+                            builder: (context, levelProvider, child) {
+                              final userLevel = levelProvider.userLevel;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    userLevel.status,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF225B6A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${userLevel.currentXp} XP / ${userLevel.xpToNextLevel} XP до уровня ${userLevel.level + 1}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF52B3B6),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],

@@ -8,6 +8,7 @@ import 'package:habitgo/main.dart';
 
 class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
+  LevelProvider? _levelProvider;
 
   List<Habit> get habits => [..._habits];
   
@@ -19,6 +20,10 @@ class HabitProvider with ChangeNotifier {
 
   HabitProvider() {
     _loadHabits();
+  }
+
+  void setLevelProvider(LevelProvider levelProvider) {
+    _levelProvider = levelProvider;
   }
 
   Future<void> _loadHabits() async {
@@ -68,10 +73,6 @@ class HabitProvider with ChangeNotifier {
       _habits[index].completeForDate(date);
       _saveHabits();
       notifyListeners();
-
-      // Award XP for completing the habit
-      final levelProvider = Provider.of<LevelProvider>(navigatorKey.currentContext!, listen: false);
-      levelProvider.completeTask(xp);
     }
   }
 

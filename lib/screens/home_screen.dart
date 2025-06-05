@@ -88,38 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Container(
                               margin: const EdgeInsets.only(right: 16),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE1FFFC),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFF52B3B6), width: 2),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        Provider.of<LevelProvider>(context).userLevel.level.toString(),
-                                        style: const TextStyle(
-                                          color: Color(0xFF225B6A),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    Provider.of<LevelProvider>(context).userLevel.status,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF52B3B6),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              child: const LevelProgressCircle(),
                             ),
                             Expanded(
                               child: Column(
@@ -182,11 +151,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       habit: habit,
                                       index: index,
                                       onDelete: () => _deleteHabit(habit),
-                                      onComplete: () {
-                                        habitProvider.markHabitComplete(habit.id, DateTime.now(), habit.calculateXp());
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Привычка отмечена как выполненная!')),
-                                        );
+                                      onComplete: () async {
+                                        final levelProvider = Provider.of<LevelProvider>(context, listen: false);
+                                        final xp = habit.calculateXp();
+                                        habitProvider.markHabitComplete(habit.id, DateTime.now(), xp);
+                                        await levelProvider.completeTask(xp);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Привычка отмечена как выполненная!')),
+                                          );
+                                        }
                                       },
                                     );
                                   },

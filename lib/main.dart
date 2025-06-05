@@ -45,6 +45,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LevelProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         navigatorKey: navigatorKey,
         title: 'HabitGo',
         theme: ThemeData(
@@ -75,6 +76,9 @@ class _InitialScreenState extends State<InitialScreen> {
     print('Initializing user...');
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final recommendationsProvider = Provider.of<RecommendationsProvider>(context, listen: false);
+    final levelProvider = Provider.of<LevelProvider>(context, listen: false);
+    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+    
     try {
       await userProvider.initializeUser();
       print('User initialized: \\${userProvider.isInitialized}');
@@ -82,6 +86,7 @@ class _InitialScreenState extends State<InitialScreen> {
       print('USER INIT ERROR: $e');
       print(stack);
     }
+    
     if (userProvider.isInitialized) {
       try {
         print('Loading recommendations...');
@@ -92,6 +97,10 @@ class _InitialScreenState extends State<InitialScreen> {
         print(stack);
       }
     }
+
+    // Connect providers
+    levelProvider.setUserProvider(userProvider);
+    habitProvider.setLevelProvider(levelProvider);
   }
 
   @override
