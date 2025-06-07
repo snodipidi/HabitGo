@@ -5,7 +5,6 @@ import 'package:habitgo/providers/user_provider.dart';
 import 'package:habitgo/widgets/level_progress_circle.dart';
 import 'package:habitgo/services/auth_service.dart';
 import 'package:habitgo/screens/shop_screen.dart';
-import 'package:habitgo/widgets/recommendations_section.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -313,23 +312,6 @@ class SettingsScreen extends StatelessWidget {
                           )),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Рекомендации
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const RecommendationsSection(),
                   ),
                   const SizedBox(height: 32),
                 ],

@@ -35,22 +35,29 @@ class LevelProvider with ChangeNotifier {
   }
 
   Future<void> completeTask(int xp) async {
+    if (xp <= 0) return;
+    
     print('Completing task with XP: $xp');
     print('Before - Level: ${_userLevel?.level}, XP: ${_userLevel?.currentXp}, Progress: ${_userLevel?.getProgressPercentage()}');
     
     final prefs = await SharedPreferences.getInstance();
     final prevLevel = _userLevel?.level ?? 1;
+    
+    // Создаем новый уровень с начисленным XP
     _userLevel = (_userLevel ?? UserLevel.initial()).addXp(xp);
     
     print('After - Level: ${_userLevel!.level}, XP: ${_userLevel!.currentXp}, Progress: ${_userLevel!.getProgressPercentage()}');
     
+    // Сохраняем обновленные данные
     await prefs.setInt(_levelKey, _userLevel!.level);
     await prefs.setInt(_xpKey, _userLevel!.currentXp);
     
+    // Начисляем монеты при повышении уровня
     if (_userProvider != null && _userLevel!.level > prevLevel) {
-      _userProvider!.addCoins(20 * (_userLevel!.level - prevLevel));
+      await _userProvider!.addCoins(20 * (_userLevel!.level - prevLevel));
     }
     
+    // Уведомляем об изменениях
     notifyListeners();
   }
 

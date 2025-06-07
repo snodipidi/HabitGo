@@ -64,14 +64,20 @@ class HabitProvider with ChangeNotifier {
     }
   }
 
-  void markHabitComplete(String id, DateTime date, int xp) {
+  void markHabitComplete(String id, DateTime date, int xp) async {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
       _habits[index] = _habits[index].copyWith(
         isCompleted: true,
       );
       _habits[index].completeForDate(date);
-      _saveHabits();
+      await _saveHabits();
+      
+      // Начисляем XP через LevelProvider
+      if (_levelProvider != null) {
+        await _levelProvider!.completeTask(xp);
+      }
+      
       notifyListeners();
     }
   }
