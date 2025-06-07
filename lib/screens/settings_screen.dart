@@ -140,14 +140,6 @@ class SettingsScreen extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  userLevel.status,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF52B3B6),
-                                  ),
-                                ),
                               ],
                             );
                           },
