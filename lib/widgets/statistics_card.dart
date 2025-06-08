@@ -8,12 +8,12 @@ class StatisticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final habitProvider = Provider.of<HabitProvider>(context);
+    final allHabits = habitProvider.habits; // Get all habits
     final activeHabits = habitProvider.activeHabits;
-    final completedHabits = habitProvider.completedHabits;
     
     // Подсчет статистики
-    final totalHabits = activeHabits.length + completedHabits.length;
-    final totalCompleted = completedHabits.length;
+    final totalHabits = allHabits.length;
+    final totalCompletedTasks = allHabits.fold<int>(0, (sum, habit) => sum + habit.completedDates.length);
     
     // Подсчет привычек по категориям
     final categoryStats = <String, int>{};
@@ -24,7 +24,7 @@ class StatisticsCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -49,22 +49,28 @@ class StatisticsCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatItem(
-                'Всего привычек',
-                totalHabits.toString(),
-                Icons.list_alt_rounded,
+              Expanded(
+                child: _buildStatItem(
+                  'Всего\nпривычек',
+                  totalHabits.toString(),
+                  Icons.list_alt_rounded,
+                ),
               ),
-              _buildStatItem(
-                'Выполнено всего',
-                totalCompleted.toString(),
-                Icons.check_circle_outline_rounded,
+              Expanded(
+                child: _buildStatItem(
+                  'Выполненные\nзадачи',
+                  totalCompletedTasks.toString(),
+                  Icons.check_circle_outline_rounded,
+                ),
               ),
-              _buildStatItem(
-                'Активных',
-                activeHabits.length.toString(),
-                Icons.play_circle_outline_rounded,
+              Expanded(
+                child: _buildStatItem(
+                  'Активные\nпривычки',
+                  activeHabits.length.toString(),
+                  Icons.play_circle_outline_rounded,
+                ),
               ),
             ],
           ),
@@ -108,9 +114,11 @@ class StatisticsCard extends StatelessWidget {
 
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: const Color(0xFFE1FFFC),
             borderRadius: BorderRadius.circular(12),
@@ -124,6 +132,7 @@ class StatisticsCard extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
+          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -131,11 +140,16 @@ class StatisticsCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF52B3B6),
+        SizedBox(
+          height: 30.0,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF52B3B6),
+            ),
           ),
         ),
       ],
