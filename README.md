@@ -1,63 +1,16 @@
-# HabitGo
+# HabitGo: Ваш путь к устойчивым привычкам
 
-HabitGo is a mobile application designed to help users build and maintain healthy habits through small, consistent steps. The app focuses on creating mini-habits that gradually transform daily life towards health and well-being.
+## Описание
 
-## Features
+HabitGo — это интуитивно понятное и вдохновляющее мобильное приложение, разработанное, чтобы помочь вам строить и поддерживать полезные привычки. Отслеживайте свой прогресс, получайте XP за выполненные задачи, повышайте уровень и открывайте новые звания, которые отражают ваш рост и преданность. С HabitGo ваши маленькие шаги приведут к большим переменам!
 
-- Create and track personalized habits
-- Set weekly targets for each habit
-- Track progress with visual indicators
-- Receive daily reminders
-- Swipe-to-delete functionality
-- Beautiful and intuitive user interface
+## Ключевые Особенности
 
-## Getting Started
+*   **Отслеживание Привычек:** Легко добавляйте и отслеживайте свои ежедневные привычки.
+*   **Система Уровней:** Получайте очки опыта (XP) за каждую выполненную привычку и повышайте свой уровень.
+*   **Уникальные Звания:** По мере роста вашего уровня, вы будете получать новые и уникальные звания, которые отражают ваш прогресс и мастерство в формировании привычек.
+*   **Статистика:** Просматривайте подробную статистику по своим привычкам, включая общее количество привычек, выполненные задачи и статистику по категориям.
+*   **Категории Привычек:** Организуйте свои привычки по различным категориям для лучшего обзора.
+*   **Напоминания:** Настраиваемые напоминания, чтобы вы никогда не забывали о своих привычках.
+*   **Мотивация:** Яркий и приятный интерфейс, а также система вознаграждений, поддерживающие вашу мотивацию.
 
-### Prerequisites
-
-- Flutter SDK (latest version)
-- Android Studio / VS Code
-- Android SDK (for Android development)
-- Xcode (for iOS development, macOS only)
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/habitgo.git
-```
-
-2. Navigate to the project directory:
-```bash
-cd habitgo
-```
-
-3. Install dependencies:
-```bash
-flutter pub get
-```
-
-4. Run the app:
-```bash
-flutter run
-```
-
-## Usage
-
-1. Launch the app
-2. Tap the "+" button to add a new habit
-3. Fill in the habit details:
-   - Title
-   - Description
-   - Target days per week
-   - Reminder time
-4. Track your progress by marking habits as complete each day
-5. View your weekly progress in the main screen
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
