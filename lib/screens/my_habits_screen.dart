@@ -25,18 +25,37 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
         ? habits
         : habits.where((habit) => habit.category.label == _selectedCategory).toList();
 
-    // Then sort the filtered habits
-    if (_sortBy == 'time') {
-      filteredHabits.sort((a, b) {
+    // Get today's habits
+    final today = DateTime.now();
+    final todayHabits = filteredHabits.where((habit) {
+      final isDayOfWeek = habit.selectedWeekdays.contains(today.weekday);
+      final isBeforeDeadline = habit.deadline == null || !today.isAfter(habit.deadline!);
+      final isAfterCreated = !today.isBefore(habit.createdAt);
+      return isDayOfWeek && isBeforeDeadline && isAfterCreated;
+    }).toList();
+
+    // Get other habits (not for today)
+    final otherHabits = filteredHabits.where((habit) => !todayHabits.contains(habit)).toList();
+
+    if (_sortBy == 'name') {
+      // Sort all habits alphabetically
+      final allHabits = [...todayHabits, ...otherHabits];
+      allHabits.sort((a, b) => a.title.compareTo(b.title));
+      return allHabits;
+    } else {
+      // Sort by time (default) - today's habits first
+      todayHabits.sort((a, b) {
         final aTime = a.reminderTime.hour * 60 + a.reminderTime.minute;
         final bTime = b.reminderTime.hour * 60 + b.reminderTime.minute;
         return aTime.compareTo(bTime);
       });
-    } else {
-      filteredHabits.sort((a, b) => a.title.compareTo(b.title));
+      otherHabits.sort((a, b) {
+        final aTime = a.reminderTime.hour * 60 + a.reminderTime.minute;
+        final bTime = b.reminderTime.hour * 60 + b.reminderTime.minute;
+        return aTime.compareTo(bTime);
+      });
+      return [...todayHabits, ...otherHabits];
     }
-
-    return filteredHabits;
   }
 
   @override

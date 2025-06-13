@@ -18,6 +18,17 @@ class HabitProvider with ChangeNotifier {
   // Get only completed habits
   List<Habit> get completedHabits => _habits.where((habit) => habit.isCompleted).toList();
 
+  // Get habits scheduled for today
+  List<Habit> get todayHabits {
+    final today = DateTime.now();
+    return _habits.where((habit) {
+      final isDayOfWeek = habit.selectedWeekdays.contains(today.weekday);
+      final isBeforeDeadline = habit.deadline == null || !today.isAfter(habit.deadline!);
+      final isAfterCreated = !today.isBefore(habit.createdAt);
+      return isDayOfWeek && isBeforeDeadline && isAfterCreated && !habit.isCompleted;
+    }).toList();
+  }
+
   HabitProvider() {
     _loadHabits();
   }

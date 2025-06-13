@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         Expanded(
-                          child: habitProvider.activeHabits.isEmpty
+                          child: habitProvider.todayHabits.isEmpty
                               ? const Center(
                                   child: Text(
                                     'Нет привычек на сегодня.',
@@ -143,10 +143,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 )
                               : ListView.separated(
-                                  itemCount: habitProvider.activeHabits.length,
+                                  itemCount: habitProvider.todayHabits.length,
                                   separatorBuilder: (context, index) => const SizedBox(height: 12),
                                   itemBuilder: (context, index) {
-                                    final habit = habitProvider.activeHabits[index];
+                                    final habit = habitProvider.todayHabits[index];
                                     return _HabitListItem(
                                       habit: habit,
                                       index: index,
