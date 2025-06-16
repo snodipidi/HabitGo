@@ -199,6 +199,7 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: _HabitListItem(
+                              key: ValueKey(habit.id),
                               habit: habit,
                               index: index,
                               onDelete: () => _deleteHabit(context, habit),
@@ -227,6 +228,11 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
     habitProvider.removeHabit(habit.id);
   }
+
+  void _completeHabit(BuildContext context, Habit habit) {
+    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+    habitProvider.markHabitComplete(habit.id, DateTime.now(), 10); // Award 10 XP for completing a habit
+  }
 }
 
 class _HabitListItem extends StatefulWidget {
@@ -249,6 +255,15 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
   late AnimationController _controller;
   late Animation<double> _heightFactor;
   bool _isExpanded = false;
+  bool _isArchiving = false;
+  
+  // Переменные для отслеживания свайпов
+  double _dragOffset = 0.0;
+  double _maxLeftSwipeWidth = 0.0;
+  static const double _actionButtonOverlap = 15.0;
+  static const double _checkmarkSize = 100.0;
+  static const double _checkmarkPadding = 10.0;
+  static const double _swipeThreshold = 0.3; // 30% ширины экрана
 
   @override
   void initState() {
@@ -257,13 +272,267 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeOutQuad));
+    
+    // Инициализируем максимальную ширину свайпа после построения виджета
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _maxLeftSwipeWidth = MediaQuery.of(context).size.width * 0.4; // 2 кнопки по 20%
+      });
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_isArchiving) return;
+    
+    setState(() {
+      _dragOffset += details.delta.dx;
+      // Ограничиваем максимальное смещение
+      _dragOffset = _dragOffset.clamp(
+        -_maxLeftSwipeWidth,
+        MediaQuery.of(context).size.width,
+      );
+    });
+  }
+
+  Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
+    if (_isArchiving) return;
+    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final velocity = details.primaryVelocity ?? 0;
+    final threshold = screenWidth * _swipeThreshold;
+    
+    if (_dragOffset > threshold || velocity > 500) {
+      // Начинаем процесс архивации
+      setState(() {
+        _isArchiving = true;
+        _dragOffset = screenWidth;
+      });
+
+      // Ждем завершения анимации
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+      if (mounted) {
+        // Архивируем привычку
+        final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+        habitProvider.markHabitComplete(widget.habit.id, DateTime.now(), 10);
+      }
+    } else if (_dragOffset < -threshold || velocity < -500) {
+      setState(() {
+        _dragOffset = -_maxLeftSwipeWidth;
+      });
+    } else {
+      setState(() {
+        _dragOffset = 0;
+      });
+    }
+  }
+
+  void _handleHorizontalDragCancel() {
+    if (_isArchiving) return;
+    
+    setState(() {
+      _dragOffset = 0;
+    });
+  }
+
+  Widget _buildLeftActions() {
+    return Positioned.fill(
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          margin: const EdgeInsets.only(left: _actionButtonOverlap),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width * 0.2,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF52B3B6),
+                  borderRadius: BorderRadius.horizontal(
+                    left: Radius.circular(16),
+                  ),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditHabitScreen(habit: widget.habit),
+                      ),
+                    );
+                    setState(() => _dragOffset = 0);
+                  },
+                ),
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width * 0.2,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.horizontal(
+                    right: Radius.circular(16),
+                  ),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.white),
+                  onPressed: () {
+                    widget.onDelete();
+                    setState(() => _dragOffset = 0);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompleteAnimation() {
+    final progress = _dragOffset / MediaQuery.of(context).size.width;
+    final isComplete = progress >= _swipeThreshold;
+    
+    return Positioned(
+      left: 16,
+      top: _checkmarkPadding,
+      child: Container(
+        width: _checkmarkSize,
+        height: _checkmarkSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isComplete ? Colors.green : const Color(0xFF52B3B6),
+            width: 3,
+          ),
+        ),
+        child: CustomPaint(
+          painter: CompleteAnimationPainter(
+            progress: progress,
+            isComplete: isComplete,
+          ),
+          child: Center(
+            child: Icon(
+              Icons.check,
+              color: isComplete ? Colors.green : Colors.white,
+              size: 32,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopPart() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                widget.habit.category.icon,
+                color: const Color(0xFF52B3B6),
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  widget.habit.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF225B6A),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.habit.description,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF225B6A),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${widget.habit.reminderTime.format(context)} – ${widget.habit.deadlineTime.format(context)}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF52B3B6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescription() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Text(
+        widget.habit.description,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFF225B6A),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHabitContent() {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 120),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTopPart(),
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return ClipRect(
+                    child: Align(
+                      heightFactor: _heightFactor.value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: _buildDescription(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _toggleExpanded() {
@@ -279,121 +548,65 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
 
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (context) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditHabitScreen(habit: widget.habit),
-                ),
-              );
-            },
-            backgroundColor: const Color(0xFF52B3B6),
-            foregroundColor: Colors.white,
-            icon: Icons.edit,
-            label: 'Редактировать',
-          ),
-          SlidableAction(
-            onPressed: (context) => widget.onDelete(),
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-            icon: Icons.delete,
-            label: 'Удалить',
-          ),
-        ],
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            GestureDetector(
+    return Stack(
+      children: [
+        // Фон с действиями для свайпа влево
+        if (_dragOffset < 0) _buildLeftActions(),
+        
+        // Анимация выполнения для свайпа вправо
+        if (_dragOffset > 0 && !_isArchiving) _buildCompleteAnimation(),
+        
+        // Основная карточка
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutQuad,
+          child: Transform.translate(
+            offset: Offset(_dragOffset, 0),
+            child: GestureDetector(
+              onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+              onHorizontalDragEnd: _handleHorizontalDragEnd,
+              onHorizontalDragCancel: _handleHorizontalDragCancel,
               onTap: _toggleExpanded,
-              child: Container(
-                height: 120,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          widget.habit.category.icon,
-                          color: const Color(0xFF52B3B6),
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            widget.habit.title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF225B6A),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.habit.description,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF225B6A),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${widget.habit.reminderTime.format(context)} – ${widget.habit.deadlineTime.format(context)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF52B3B6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: _buildHabitContent(),
             ),
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return ClipRect(
-                  child: Align(
-                    heightFactor: _heightFactor.value,
-                    child: child,
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text(
-                  widget.habit.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF225B6A),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
+  }
+}
+
+class CompleteAnimationPainter extends CustomPainter {
+  final double progress;
+  final bool isComplete;
+
+  CompleteAnimationPainter({
+    required this.progress,
+    required this.isComplete,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = isComplete ? Colors.green : const Color(0xFF52B3B6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Рисуем дугу прогресса
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -1.5 * 3.14159, // Начальный угол
+      progress * 2 * 3.14159, // Угол прогресса
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CompleteAnimationPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.isComplete != isComplete;
   }
 } 
