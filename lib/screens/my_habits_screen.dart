@@ -229,7 +229,7 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
   }
 }
 
-class _HabitListItem extends StatelessWidget {
+class _HabitListItem extends StatefulWidget {
   final Habit habit;
   final int index;
   final VoidCallback onDelete;
@@ -242,167 +242,156 @@ class _HabitListItem extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<_HabitListItem> createState() => _HabitListItemState();
+}
+
+class _HabitListItemState extends State<_HabitListItem> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _heightFactor;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (habit.description.isNotEmpty) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              backgroundColor: const Color(0xFFE1FFFC),
-              title: const Text(
-                'Цель/мини-задача',
-                style: TextStyle(
-                  color: Color(0xFF225B6A),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
+    return Slidable(
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditHabitScreen(habit: widget.habit),
                 ),
-              ),
-              content: Text(
-                habit.description,
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF225B6A),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Закрыть', style: TextStyle(color: Color(0xFF52B3B6))),
-                ),
-              ],
-            ),
-          );
-        }
-      },
-      child: Slidable(
-        key: ValueKey(habit.id),
-        startActionPane: ActionPane(
-          motion: const DrawerMotion(),
-          extentRatio: 0.5,
-          children: [
-            SlidableAction(
-              onPressed: (_) {
-                final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-                habitProvider.markHabitComplete(habit.id, DateTime.now(), habit.calculateXp());
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Привычка отмечена как выполненная!')),
-                );
-              },
-              backgroundColor: const Color(0xFF52B3B6),
-              foregroundColor: Colors.white,
-              icon: Icons.check_circle_outline_rounded,
-              label: '',
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              autoClose: true,
-              flex: 1,
-              spacing: 0,
-            ),
-            SlidableAction(
-              onPressed: (_) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => EditHabitScreen(habit: habit),
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFF225B6A),
-              foregroundColor: Colors.white,
-              icon: Icons.edit_outlined,
-              label: '',
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              autoClose: true,
-              flex: 1,
-              spacing: 0,
+              );
+            },
+            backgroundColor: const Color(0xFF52B3B6),
+            foregroundColor: Colors.white,
+            icon: Icons.edit,
+            label: 'Редактировать',
+          ),
+          SlidableAction(
+            onPressed: (context) => widget.onDelete(),
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Удалить',
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        endActionPane: ActionPane(
-          motion: const DrawerMotion(),
-          extentRatio: 0.3,
+        child: Column(
           children: [
-            SlidableAction(
-              onPressed: (_) => onDelete(),
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              icon: Icons.delete_outline_rounded,
-              label: '',
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              autoClose: true,
-              flex: 1,
-              spacing: 0,
-            ),
-          ],
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(230),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            GestureDetector(
+              onTap: _toggleExpanded,
+              child: Container(
+                height: 120,
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      habit.category.icon,
-                      color: Color(0xFF52B3B6),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        habit.title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF225B6A),
+                    Row(
+                      children: [
+                        Icon(
+                          widget.habit.category.icon,
+                          color: const Color(0xFF52B3B6),
+                          size: 24,
                         ),
-                        softWrap: true,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            widget.habit.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF225B6A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.habit.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF225B6A),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      '+${habit.calculateXp()} XP',
+                      '${widget.habit.reminderTime.format(context)} – ${widget.habit.deadlineTime.format(context)}',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF52B3B6),
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                if (habit.description.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    habit.description,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF225B6A),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
-          ),
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return ClipRect(
+                  child: Align(
+                    heightFactor: _heightFactor.value,
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(
+                  widget.habit.description,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF225B6A),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

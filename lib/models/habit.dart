@@ -44,6 +44,7 @@ class Habit {
   final Category category;
   final HabitDuration duration;
   final DateTime? deadline;
+  final TimeOfDay deadlineTime;
   final DateTime createdAt;
 
   Habit({
@@ -58,6 +59,7 @@ class Habit {
     Category? category,
     this.duration = HabitDuration.easy, // по умолчанию Лёгкое
     this.deadline,
+    this.deadlineTime = const TimeOfDay(hour: 23, minute: 59),
     DateTime? createdAt,
   })  : id = id ?? const Uuid().v4(),
         completedDates = completedDates ?? [],
@@ -77,6 +79,7 @@ class Habit {
     Category? category,
     HabitDuration? duration,
     DateTime? deadline,
+    TimeOfDay? deadlineTime,
     DateTime? createdAt,
   }) {
     return Habit(
@@ -91,6 +94,7 @@ class Habit {
       category: category ?? this.category,
       duration: duration ?? this.duration,
       deadline: deadline ?? this.deadline,
+      deadlineTime: deadlineTime ?? this.deadlineTime,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -147,6 +151,7 @@ class Habit {
       'category': category.toJson(),
       'duration': duration.index,
       'deadline': deadline?.toIso8601String(),
+      'deadlineTime': '${deadlineTime.hour}:${deadlineTime.minute}',
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -170,6 +175,9 @@ class Habit {
       deadline: json['deadline'] != null && json['deadline'] != ''
           ? DateTime.tryParse(json['deadline'])
           : null,
+      deadlineTime: json['deadlineTime'] != null
+          ? _parseTimeOfDay(json['deadlineTime'] as String)
+          : const TimeOfDay(hour: 23, minute: 59),
       createdAt: json['createdAt'] != null && json['createdAt'] != ''
           ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
           : DateTime.now(),

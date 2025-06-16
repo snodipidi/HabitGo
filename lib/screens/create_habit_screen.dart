@@ -17,10 +17,11 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   TimeOfDay _selectedTime = const TimeOfDay(hour: 12, minute: 0);
+  TimeOfDay _selectedDeadlineTime = const TimeOfDay(hour: 23, minute: 59);
   Category _selectedCategory = Category(label: 'Выберите категорию', icon: Icons.category);
   List<int> _selectedWeekdays = [1, 3, 5]; // По умолчанию: понедельник, среда, пятница
   HabitDuration _selectedDuration = HabitDuration.easy;
-  DateTime? _selectedDeadline;
+  int _selectedDurationDays = 21; // По умолчанию 21 день
 
   final List<String> _weekdays = [
     'Пн',
@@ -47,6 +48,18 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
     if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
+      });
+    }
+  }
+
+  void _selectDeadlineTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedDeadlineTime,
+    );
+    if (picked != null && picked != _selectedDeadlineTime) {
+      setState(() {
+        _selectedDeadlineTime = picked;
       });
     }
   }
@@ -187,7 +200,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                 controller: _descriptionController,
                                 maxLines: 3,
                                 decoration: InputDecoration(
-                                  labelText: 'Цель/мини-задача',
+                                  labelText: 'Описание/Инструкция',
                                   labelStyle: const TextStyle(color: Color(0xFF52B3B6)),
                                   filled: true,
                                   fillColor: Colors.white.withOpacity(0.9),
@@ -264,121 +277,120 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                 }),
                               ),
                               const SizedBox(height: 24),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFF52B3B6)),
-                                ),
-                                child: ListTile(
-                                  leading: const Icon(Icons.access_time, color: Color(0xFF52B3B6)),
-                                  title: const Text(
-                                    'Время напоминания',
-                                    style: TextStyle(color: Color(0xFF52B3B6)),
-                                  ),
-                                  subtitle: Text(
-                                    _selectedTime.format(context),
-                                    style: const TextStyle(color: Color(0xFF225B6A)),
-                                  ),
-                                  trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFF52B3B6)),
-                                  onTap: _selectTime,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFF52B3B6)),
-                                ),
-                                child: ListTile(
-                                  leading: const Icon(Icons.event, color: Color(0xFF52B3B6)),
-                                  title: const Text('Дедлайн', style: TextStyle(color: Color(0xFF52B3B6))),
-                                  subtitle: Text(
-                                    _selectedDeadline != null
-                                        ? '${_selectedDeadline!.day.toString().padLeft(2, '0')}.${_selectedDeadline!.month.toString().padLeft(2, '0')}.${_selectedDeadline!.year}'
-                                        : 'Без дедлайна',
-                                    style: const TextStyle(color: Color(0xFF225B6A)),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (_selectedDeadline != null)
-                                        IconButton(
-                                          icon: const Icon(Icons.clear, color: Color(0xFF52B3B6)),
-                                          onPressed: () {
-                                            setState(() {
-                                              _selectedDeadline = null;
-                                            });
-                                          },
-                                        ),
-                                      Icon(Icons.arrow_forward_ios, color: Color(0xFF52B3B6)),
-                                    ],
-                                  ),
-                                  onTap: () async {
-                                    final picked = await showDatePicker(
-                                      context: context,
-                                      initialDate: _selectedDeadline ?? DateTime.now(),
-                                      firstDate: DateTime.now(),
-                                      lastDate: DateTime(2100),
-                                    );
-                                    if (picked != null) {
-                                      setState(() {
-                                        _selectedDeadline = picked;
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                'Длительность',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF225B6A),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: HabitDuration.values.map((d) {
-                                  return Expanded(
+                                children: [
+                                  Expanded(
                                     child: GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedDuration = d;
-                                        });
-                                      },
+                                      onTap: _selectTime,
                                       child: Container(
-                                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                                        height: 80,
                                         decoration: BoxDecoration(
-                                          color: _selectedDuration == d ? Color(0xFF52B3B6) : Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: Color(0xFF52B3B6)),
+                                          color: Colors.white.withOpacity(0.9),
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: const Color(0xFF52B3B6)),
                                         ),
                                         child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            Icon(
-                                              d == HabitDuration.easy ? Icons.timer : d == HabitDuration.medium ? Icons.timelapse : Icons.hourglass_full,
-                                              color: _selectedDuration == d ? Colors.white : Color(0xFF52B3B6),
+                                            const Text(
+                                              'Начало',
+                                              style: TextStyle(
+                                                color: Color(0xFF52B3B6),
+                                                fontSize: 16,
+                                              ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              d.label,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: _selectedDuration == d ? Colors.white : Color(0xFF225B6A),
-                                                fontSize: 13,
+                                              _selectedTime.format(context),
+                                              style: const TextStyle(
+                                                color: Color(0xFF225B6A),
+                                                fontSize: 16,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
                                     ),
-                                  );
-                                }).toList(),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: _selectDeadlineTime,
+                                      child: Container(
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.9),
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: const Color(0xFF52B3B6)),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Text(
+                                              'Конец',
+                                              style: TextStyle(
+                                                color: Color(0xFF52B3B6),
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _selectedDeadlineTime.format(context),
+                                              style: const TextStyle(
+                                                color: Color(0xFF225B6A),
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFF52B3B6)),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(Icons.calendar_today, color: Color(0xFF52B3B6)),
+                                  title: const Text(
+                                    'Длительность (дней)',
+                                    style: TextStyle(color: Color(0xFF52B3B6)),
+                                  ),
+                                  subtitle: Text(
+                                    '$_selectedDurationDays дней',
+                                    style: const TextStyle(color: Color(0xFF225B6A)),
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.remove, color: Color(0xFF52B3B6)),
+                                        onPressed: _selectedDurationDays > 7
+                                            ? () {
+                                                setState(() {
+                                                  _selectedDurationDays -= 7;
+                                                });
+                                              }
+                                            : null,
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.add, color: Color(0xFF52B3B6)),
+                                        onPressed: _selectedDurationDays < 84 // 12 weeks * 7 days
+                                            ? () {
+                                                setState(() {
+                                                  _selectedDurationDays += 7;
+                                                });
+                                              }
+                                            : null,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 36),
                               SizedBox(
@@ -406,7 +418,8 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                           reminderTime: _selectedTime,
                                           category: _selectedCategory,
                                           duration: _selectedDuration,
-                                          deadline: _selectedDeadline,
+                                          deadline: DateTime.now().add(Duration(days: _selectedDurationDays)),
+                                          deadlineTime: _selectedDeadlineTime,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).addHabit(habit);
                                         Navigator.pop(context);

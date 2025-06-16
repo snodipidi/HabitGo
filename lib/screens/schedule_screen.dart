@@ -11,22 +11,14 @@ class ScheduleScreen extends StatefulWidget {
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
 
-class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _selectedDay = _focusedDay;
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   List<Habit> _getHabitsForDay(DateTime? day, List<Habit> habits) {
@@ -76,107 +68,74 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
           child: Column(
             children: [
               const SizedBox(height: 28),
-              TabBar(
-                controller: _tabController,
-                indicatorColor: const Color(0xFF225B6A),
-                labelColor: const Color(0xFF225B6A),
-                unselectedLabelColor: Colors.black38,
-                tabs: const [
-                  Tab(text: 'Месяц'),
-                  Tab(text: 'Неделя'),
-                  Tab(text: 'День'),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TableCalendar(
+                  firstDay: DateTime.utc(2020, 1, 1),
+                  lastDay: DateTime.utc(2100, 12, 31),
+                  focusedDay: _focusedDay,
+                  calendarFormat: CalendarFormat.month,
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                  },
+                  calendarStyle: CalendarStyle(
+                    todayDecoration: BoxDecoration(
+                      color: const Color(0xFF52B3B6).withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    selectedDecoration: const BoxDecoration(
+                      color: Color(0xFF52B3B6),
+                      shape: BoxShape.circle,
+                    ),
+                    selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  headerStyle: const HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: TextStyle(fontSize: 18, color: Color(0xFF225B6A), fontWeight: FontWeight.bold),
+                  ),
+                  daysOfWeekStyle: const DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(color: Color(0xFF225B6A)),
+                    weekendStyle: TextStyle(color: Color(0xFF225B6A)),
+                  ),
+                  onPageChanged: (focusedDay) {
+                    setState(() {
+                      _focusedDay = focusedDay;
+                    });
+                  },
+                  eventLoader: (day) {
+                    return _getHabitsForDay(day, habits);
+                  },
+                  calendarBuilders: CalendarBuilders(
+                    markerBuilder: (context, date, events) {
+                      if (events.isNotEmpty) {
+                        return Positioned(
+                          bottom: 1,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF225B6A),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      }
+                      return null;
+                    },
+                  ),
+                ),
               ),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Месяц
-                    _buildCalendarView(CalendarFormat.month, habits),
-                    // Неделя
-                    _buildCalendarView(CalendarFormat.week, habits),
-                    // День
-                    _buildDayView(selectedHabits),
-                  ],
-                ),
+                child: _buildDayView(selectedHabits),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCalendarView(CalendarFormat format, List<Habit> habits) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2100, 12, 31),
-            focusedDay: _focusedDay,
-            calendarFormat: format,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
-            calendarStyle: CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: const Color(0xFF52B3B6).withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: const BoxDecoration(
-                color: Color(0xFF52B3B6),
-                shape: BoxShape.circle,
-              ),
-              selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            headerStyle: const HeaderStyle(
-              formatButtonVisible: false,
-              titleCentered: true,
-              titleTextStyle: TextStyle(fontSize: 18, color: Color(0xFF225B6A), fontWeight: FontWeight.bold),
-            ),
-            daysOfWeekStyle: const DaysOfWeekStyle(
-              weekdayStyle: TextStyle(color: Color(0xFF225B6A)),
-              weekendStyle: TextStyle(color: Color(0xFF225B6A)),
-            ),
-            onPageChanged: (focusedDay) {
-              setState(() {
-                _focusedDay = focusedDay;
-              });
-            },
-            eventLoader: (day) {
-              // Для выделения дней с привычками
-              return _getHabitsForDay(day, habits);
-            },
-            calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, events) {
-                if (events.isNotEmpty) {
-                  return Positioned(
-                    bottom: 1,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF225B6A),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  );
-                }
-                return null;
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _buildDayView(_getHabitsForDay(_selectedDay, habits)),
-          ),
-        ],
       ),
     );
   }
@@ -196,69 +155,146 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final habit = habits[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  child: Row(
+                return _HabitCard(habit: habit);
+              },
+            ),
+    );
+  }
+}
+
+class _HabitCard extends StatefulWidget {
+  final Habit habit;
+
+  const _HabitCard({
+    Key? key,
+    required this.habit,
+  }) : super(key: key);
+
+  @override
+  State<_HabitCard> createState() => _HabitCardState();
+}
+
+class _HabitCardState extends State<_HabitCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _heightFactor;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _toggleExpanded,
+            child: Container(
+              height: 120,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Icon(habit.category.icon, color: const Color(0xFF52B3B6)),
+                      Icon(
+                        widget.habit.category.icon,
+                        color: const Color(0xFF52B3B6),
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              habit.title,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF225B6A),
-                              ),
-                            ),
-                            if (habit.description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                habit.description,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF225B6A),
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  habit.reminderTime.format(context),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black45,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        child: Text(
+                          widget.habit.title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF225B6A),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                );
-              },
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.habit.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF225B6A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${widget.habit.reminderTime.format(context)} – ${widget.habit.deadlineTime.format(context)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF52B3B6),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return ClipRect(
+                child: Align(
+                  heightFactor: _heightFactor.value,
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Text(
+                widget.habit.description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 } 
