@@ -108,8 +108,17 @@ class HabitProvider with ChangeNotifier {
       _habits[index].uncompleteForDate(date);
       
       // Восстанавливаем пользовательскую категорию, если она была
-      if (_habits[index].category.isCustom) {
-        _categoryProvider?.addCategory(_habits[index].category);
+      final category = _habits[index].category;
+      if (category.isCustom) {
+        // Проверяем, существует ли уже такая категория
+        final categoryProvider = _categoryProvider;
+        if (categoryProvider != null) {
+          final existingCategories = categoryProvider.customCategories;
+          final categoryExists = existingCategories.any((c) => c.label == category.label);
+          if (!categoryExists) {
+            categoryProvider.addCategory(category);
+          }
+        }
       }
       
       _saveHabits();

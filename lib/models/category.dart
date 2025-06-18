@@ -22,14 +22,32 @@ class Category {
   }
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    // Проверяем, является ли категория пользовательской
+    // Если это не базовая категория, значит она пользовательская
+    final baseCategories = [
+      'Физическое здоровье',
+      'Психическое здоровье',
+      'Самообразование',
+      'Творчество',
+      'Навыки и карьера',
+      'Быт и дисциплина',
+      'Социальные действия',
+      'Развлечения с пользой',
+      'Другое',
+      'Выберите категорию'
+    ];
+    
+    final label = json['label'] as String;
+    final isCustom = !baseCategories.contains(label);
+
     return Category(
-      label: json['label'] as String,
+      label: label,
       icon: IconData(
         json['iconCodePoint'] as int,
         fontFamily: json['iconFontFamily'] as String?,
         fontPackage: json['iconFontPackage'] as String?,
       ),
-      isCustom: json['isCustom'] as bool? ?? false,
+      isCustom: isCustom,
     );
   }
 } 
