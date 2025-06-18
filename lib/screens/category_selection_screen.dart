@@ -75,7 +75,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
                         labelText: 'Название категории',
                         labelStyle: const TextStyle(color: Color(0xFF52B3B6)),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.9),
+                        fillColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: const BorderSide(color: Color(0xFF52B3B6)),
@@ -119,7 +119,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
                               curve: Curves.easeInOut,
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFF52B3B6) : Colors.white.withOpacity(0.9),
+                                color: isSelected ? const Color(0xFF52B3B6) : Colors.white.withAlpha((0.9 * 255).toInt()),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: isSelected ? const Color(0xFF225B6A) : const Color(0xFF52B3B6), width: 2),
                                 boxShadow: isSelected

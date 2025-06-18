@@ -280,55 +280,118 @@ class _HabitListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    final isCompleted = habit.isCompletedToday;
+    final xp = habit.todayXp;
+    final now = DateTime.now();
+    final isExpired = habit.endTime != null && now.isAfter(habit.endTime!);
+
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity! > 0 && !isCompleted && !isExpired) {
+          // Свайп вправо - отметить как выполненное
+          final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+          habitProvider.markHabitCompletedForToday(habit.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(xp > 0 ? 'Получено $xp XP!' : 'Привычка уже выполнена сегодня'),
+              backgroundColor: xp > 0 ? const Color(0xFF52B3B6) : Colors.grey,
+            ),
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCompleted 
+              ? Colors.green 
+              : isExpired 
+                ? Colors.red 
+                : const Color(0xFF52B3B6),
+            width: 1.5,
           ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                habit.category.icon,
-                color: Color(0xFF52B3B6),
-                size: 24,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  habit.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF225B6A),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  habit.category.icon,
+                  color: isCompleted 
+                    ? Colors.green 
+                    : isExpired 
+                      ? Colors.red 
+                      : const Color(0xFF52B3B6),
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    habit.title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isCompleted 
+                        ? Colors.green 
+                        : isExpired 
+                          ? Colors.red 
+                          : const Color(0xFF225B6A),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+                if (isCompleted)
+                  const Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 24,
+                  )
+                else if (isExpired)
+                  const Icon(
+                    Icons.cancel,
+                    color: Colors.red,
+                    size: 24,
+                  )
+                else
+                  Text(
+                    '+$xp XP',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF52B3B6),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
+            if (habit.description.isNotEmpty) ...[
+              const SizedBox(height: 8),
               Text(
-                '+${habit.calculateXp()} XP',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF52B3B6),
-                  fontWeight: FontWeight.w500,
+                habit.description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isCompleted 
+                    ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                    : isExpired 
+                      ? Colors.red.withAlpha((0.8 * 255).toInt())
+                      : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

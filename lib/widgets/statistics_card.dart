@@ -26,7 +26,7 @@ class StatisticsCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withAlpha((0.9 * 255).toInt()),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

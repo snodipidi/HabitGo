@@ -54,7 +54,7 @@ class ArchiveScreen extends StatelessWidget {
                     final habit = completedHabits[index];
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.white.withAlpha((0.9 * 255).toInt()),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(

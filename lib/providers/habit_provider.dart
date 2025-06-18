@@ -126,6 +126,39 @@ class HabitProvider with ChangeNotifier {
     }
   }
 
+  // Отмечает привычку как выполненную за день
+  Future<void> markHabitCompletedForToday(String id) async {
+    final index = _habits.indexWhere((habit) => habit.id == id);
+    if (index != -1) {
+      final habit = _habits[index];
+      if (!habit.isCompletedToday) {
+        final xp = habit.todayXp;
+        habit.completeForDate(DateTime.now());
+        await _saveHabits();
+        
+        // Начисляем XP через LevelProvider
+        if (_levelProvider != null && xp > 0) {
+          await _levelProvider!.completeTask(xp);
+        }
+        
+        notifyListeners();
+      }
+    }
+  }
+
+  // Отменяет отметку о выполнении привычки за день
+  Future<void> unmarkHabitCompletedForToday(String id) async {
+    final index = _habits.indexWhere((habit) => habit.id == id);
+    if (index != -1) {
+      final habit = _habits[index];
+      if (habit.isCompletedToday) {
+        habit.uncompleteForDate(DateTime.now());
+        await _saveHabits();
+        notifyListeners();
+      }
+    }
+  }
+
   // Проверяет, используется ли категория в активных привычках
   bool isCategoryInUse(String categoryLabel) {
     return _habits.any((habit) => 

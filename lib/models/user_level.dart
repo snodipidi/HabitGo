@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class UserLevel {
   final int level;
   final int currentXp;
@@ -41,7 +43,7 @@ class UserLevel {
   UserLevel addXp(int xpGained) {
     if (xpGained <= 0) return this;
     
-    print('Adding XP: $xpGained to current XP: $currentXp');
+    debugPrint('Adding XP: $xpGained to current XP: $currentXp');
     int newXp = currentXp + xpGained;
     int newLevel = level;
     int newXpToNextLevel = xpToNextLevel;
@@ -53,7 +55,7 @@ class UserLevel {
       newXpToNextLevel = calculateXpToNextLevel(newLevel);
     }
 
-    print('New level: $newLevel, New XP: $newXp, XP to next level: $newXpToNextLevel');
+    debugPrint('New level: $newLevel, New XP: $newXp, XP to next level: $newXpToNextLevel');
     return UserLevel(
       level: newLevel,
       currentXp: newXp,
@@ -65,7 +67,7 @@ class UserLevel {
   double getProgressPercentage() {
     if (xpToNextLevel <= 0) return 0.0;
     final progress = currentXp / xpToNextLevel;
-    print('Calculating progress: $currentXp / $xpToNextLevel = $progress');
+    debugPrint('Calculating progress: $currentXp / $xpToNextLevel = $progress');
     return progress.clamp(0.0, 1.0);
   }
 

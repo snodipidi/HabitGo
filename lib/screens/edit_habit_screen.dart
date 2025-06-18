@@ -44,12 +44,14 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
     _titleController = TextEditingController(text: widget.habit.title);
     _descriptionController = TextEditingController(text: widget.habit.description);
     _selectedTime = widget.habit.reminderTime;
-    _selectedDeadlineTime = widget.habit.deadlineTime;
+    _selectedDeadlineTime = widget.habit.endTime != null 
+        ? TimeOfDay.fromDateTime(widget.habit.endTime!)
+        : const TimeOfDay(hour: 23, minute: 59);
     _selectedCategory = widget.habit.category;
     _selectedWeekdays = List.from(widget.habit.selectedWeekdays);
     _selectedDuration = widget.habit.duration;
-    _selectedDurationDays = widget.habit.deadline != null 
-        ? widget.habit.deadline!.difference(widget.habit.createdAt).inDays
+    _selectedDurationDays = widget.habit.endTime != null 
+        ? widget.habit.endTime!.difference(widget.habit.createdAt).inDays
         : 21;
   }
 
@@ -134,7 +136,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withAlpha((0.9 * 255).toInt()),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -167,7 +169,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withAlpha((0.9 * 255).toInt()),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
@@ -190,7 +192,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                   labelText: 'Название привычки',
                                   labelStyle: const TextStyle(color: Color(0xFF52B3B6)),
                                   filled: true,
-                                  fillColor: Colors.white.withOpacity(0.9),
+                                  fillColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   prefixIcon: const Icon(Icons.edit, color: Color(0xFF52B3B6)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                   border: OutlineInputBorder(
@@ -222,7 +224,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                   labelText: 'Описание/инструкция',
                                   labelStyle: const TextStyle(color: Color(0xFF52B3B6)),
                                   filled: true,
-                                  fillColor: Colors.white.withOpacity(0.9),
+                                  fillColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   prefixIcon: const Icon(Icons.description, color: Color(0xFF52B3B6)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                   border: OutlineInputBorder(
@@ -243,7 +245,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                               const SizedBox(height: 24),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: const Color(0xFF52B3B6)),
                                 ),
@@ -285,7 +287,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                     ),
                                     selected: isSelected,
                                     onSelected: (selected) => _toggleWeekday(day),
-                                    backgroundColor: Colors.white.withOpacity(0.9),
+                                    backgroundColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                                     selectedColor: const Color(0xFF52B3B6),
                                     checkmarkColor: Colors.white,
                                     shape: RoundedRectangleBorder(
@@ -304,7 +306,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                       child: Container(
                                         height: 80,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                           borderRadius: BorderRadius.circular(16),
                                           border: Border.all(color: const Color(0xFF52B3B6)),
                                         ),
@@ -338,7 +340,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                       child: Container(
                                         height: 80,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                           borderRadius: BorderRadius.circular(16),
                                           border: Border.all(color: const Color(0xFF52B3B6)),
                                         ),
@@ -370,7 +372,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                               const SizedBox(height: 24),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: const Color(0xFF52B3B6)),
                                 ),
@@ -429,8 +431,14 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                           reminderTime: _selectedTime,
                                           category: _selectedCategory,
                                           duration: _selectedDuration,
-                                          deadline: DateTime.now().add(Duration(days: _selectedDurationDays)),
-                                          deadlineTime: _selectedDeadlineTime,
+                                          startDate: widget.habit.startDate,
+                                          endTime: DateTime(
+                                            DateTime.now().year,
+                                            DateTime.now().month,
+                                            DateTime.now().day,
+                                            _selectedDeadlineTime.hour,
+                                            _selectedDeadlineTime.minute,
+                                          ),
                                           createdAt: widget.habit.createdAt,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).updateHabit(habit);

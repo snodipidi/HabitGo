@@ -44,8 +44,10 @@ class Habit {
   final Category category;
   final HabitDuration duration;
   final DateTime? deadline;
-  final TimeOfDay deadlineTime;
   final DateTime createdAt;
+  final DateTime startDate;
+  final DateTime? endTime;
+  final int xpPerCompletion;
 
   Habit({
     String? id,
@@ -59,8 +61,10 @@ class Habit {
     Category? category,
     this.duration = HabitDuration.easy, // по умолчанию Лёгкое
     this.deadline,
-    this.deadlineTime = const TimeOfDay(hour: 23, minute: 59),
     DateTime? createdAt,
+    required this.startDate,
+    this.endTime,
+    this.xpPerCompletion = 10,
   })  : id = id ?? const Uuid().v4(),
         completedDates = completedDates ?? [],
         selectedWeekdays = selectedWeekdays ?? [1, 3, 5], // По умолчанию: понедельник, среда, пятница
@@ -79,8 +83,10 @@ class Habit {
     Category? category,
     HabitDuration? duration,
     DateTime? deadline,
-    TimeOfDay? deadlineTime,
     DateTime? createdAt,
+    DateTime? startDate,
+    DateTime? endTime,
+    int? xpPerCompletion,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -94,8 +100,10 @@ class Habit {
       category: category ?? this.category,
       duration: duration ?? this.duration,
       deadline: deadline ?? this.deadline,
-      deadlineTime: deadlineTime ?? this.deadlineTime,
       createdAt: createdAt ?? this.createdAt,
+      startDate: startDate ?? this.startDate,
+      endTime: endTime ?? this.endTime,
+      xpPerCompletion: xpPerCompletion ?? this.xpPerCompletion,
     );
   }
 
@@ -117,11 +125,43 @@ class Habit {
 
   bool isCompletedForDate(DateTime date) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
+    final now = DateTime.now();
+    
+    // Если есть время окончания, проверяем, не истекло ли оно
+    if (endTime != null) {
+      final todayEndTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        endTime!.hour,
+        endTime!.minute,
+      );
+      
+      // Если текущее время больше времени окончания, считаем привычку невыполненной
+      if (now.isAfter(todayEndTime)) {
+        return false;
+      }
+    }
+    
     return completedDates.any((d) => 
       d.year == normalizedDate.year && 
       d.month == normalizedDate.month && 
       d.day == normalizedDate.day
     );
+  }
+
+  // Проверяет, выполнена ли привычка сегодня
+  bool get isCompletedToday {
+    final today = DateTime.now();
+    return isCompletedForDate(today);
+  }
+
+  // Получает XP за выполнение привычки сегодня
+  int get todayXp {
+    if (isCompletedToday) {
+      return 0; // Уже выполнено сегодня
+    }
+    return calculateXp();
   }
 
   int getCompletedDaysThisWeek() {
@@ -151,8 +191,10 @@ class Habit {
       'category': category.toJson(),
       'duration': duration.index,
       'deadline': deadline?.toIso8601String(),
-      'deadlineTime': '${deadlineTime.hour}:${deadlineTime.minute}',
       'createdAt': createdAt.toIso8601String(),
+      'startDate': startDate.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
+      'xpPerCompletion': xpPerCompletion,
     };
   }
 
@@ -175,12 +217,12 @@ class Habit {
       deadline: json['deadline'] != null && json['deadline'] != ''
           ? DateTime.tryParse(json['deadline'])
           : null,
-      deadlineTime: json['deadlineTime'] != null
-          ? _parseTimeOfDay(json['deadlineTime'] as String)
-          : const TimeOfDay(hour: 23, minute: 59),
       createdAt: json['createdAt'] != null && json['createdAt'] != ''
           ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
           : DateTime.now(),
+      startDate: DateTime.parse(json['startDate'] as String),
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime'] as String) : null,
+      xpPerCompletion: json['xpPerCompletion'] as int? ?? 10,
     );
   }
 

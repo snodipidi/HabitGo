@@ -26,7 +26,7 @@ class LevelProvider with ChangeNotifier {
       xpToNextLevel: UserLevel.calculateXpToNextLevel(level),
       status: UserLevel.getStatusForLevel(level),
     );
-    print('Loaded level: ${_userLevel!.level}, XP: ${_userLevel!.currentXp}, Progress: ${_userLevel!.getProgressPercentage()}');
+    debugPrint('Loaded level: ${_userLevel!.level}, XP: ${_userLevel!.currentXp}, Progress: ${_userLevel!.getProgressPercentage()}');
     notifyListeners();
   }
 
@@ -37,8 +37,8 @@ class LevelProvider with ChangeNotifier {
   Future<void> completeTask(int xp) async {
     if (xp <= 0) return;
     
-    print('Completing task with XP: $xp');
-    print('Before - Level: ${_userLevel?.level}, XP: ${_userLevel?.currentXp}, Progress: ${_userLevel?.getProgressPercentage()}');
+    debugPrint('Completing task with XP: $xp');
+    debugPrint('Before - Level: ${_userLevel?.level}, XP: ${_userLevel?.currentXp}, Progress: ${_userLevel?.getProgressPercentage()}');
     
     final prefs = await SharedPreferences.getInstance();
     final prevLevel = _userLevel?.level ?? 1;
@@ -46,7 +46,7 @@ class LevelProvider with ChangeNotifier {
     // Создаем новый уровень с начисленным XP
     _userLevel = (_userLevel ?? UserLevel.initial()).addXp(xp);
     
-    print('After - Level: ${_userLevel!.level}, XP: ${_userLevel!.currentXp}, Progress: ${_userLevel!.getProgressPercentage()}');
+    debugPrint('After - Level: ${_userLevel!.level}, XP: ${_userLevel!.currentXp}, Progress: ${_userLevel!.getProgressPercentage()}');
     
     // Сохраняем обновленные данные
     await prefs.setInt(_levelKey, _userLevel!.level);

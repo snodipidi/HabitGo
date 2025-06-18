@@ -115,7 +115,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withAlpha((0.9 * 255).toInt()),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -148,7 +148,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withAlpha((0.9 * 255).toInt()),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
@@ -171,7 +171,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                   labelText: 'Название привычки',
                                   labelStyle: const TextStyle(color: Color(0xFF52B3B6)),
                                   filled: true,
-                                  fillColor: Colors.white.withOpacity(0.9),
+                                  fillColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   prefixIcon: const Icon(Icons.edit, color: Color(0xFF52B3B6)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                   border: OutlineInputBorder(
@@ -203,7 +203,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                   labelText: 'Описание/Инструкция',
                                   labelStyle: const TextStyle(color: Color(0xFF52B3B6)),
                                   filled: true,
-                                  fillColor: Colors.white.withOpacity(0.9),
+                                  fillColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   prefixIcon: const Icon(Icons.description, color: Color(0xFF52B3B6)),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                   border: OutlineInputBorder(
@@ -224,7 +224,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                               const SizedBox(height: 24),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: const Color(0xFF52B3B6)),
                                 ),
@@ -240,6 +240,65 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                   ),
                                   trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFF52B3B6)),
                                   onTap: _selectCategory,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha((0.9 * 255).toInt()),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFF52B3B6)),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                margin: const EdgeInsets.only(bottom: 24, top: 0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Сложность',
+                                      style: TextStyle(
+                                        color: Color(0xFF225B6A),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: HabitDuration.values.map((duration) {
+                                        final isSelected = _selectedDuration == duration;
+                                        return Expanded(
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _selectedDuration = duration;
+                                              });
+                                            },
+                                            child: Container(
+                                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                                              padding: const EdgeInsets.symmetric(vertical: 10),
+                                              decoration: BoxDecoration(
+                                                color: isSelected ? const Color(0xFF52B3B6) : Colors.white.withAlpha((0.9 * 255).toInt()),
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(color: const Color(0xFF52B3B6)),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  duration.label,
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    color: isSelected ? Colors.white : const Color(0xFF225B6A),
+                                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -266,7 +325,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                     ),
                                     selected: isSelected,
                                     onSelected: (selected) => _toggleWeekday(day),
-                                    backgroundColor: Colors.white.withOpacity(0.9),
+                                    backgroundColor: Colors.white.withAlpha((0.9 * 255).toInt()),
                                     selectedColor: const Color(0xFF52B3B6),
                                     checkmarkColor: Colors.white,
                                     shape: RoundedRectangleBorder(
@@ -285,7 +344,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                       child: Container(
                                         height: 80,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                           borderRadius: BorderRadius.circular(16),
                                           border: Border.all(color: const Color(0xFF52B3B6)),
                                         ),
@@ -319,7 +378,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                       child: Container(
                                         height: 80,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.9),
+                                          color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                           borderRadius: BorderRadius.circular(16),
                                           border: Border.all(color: const Color(0xFF52B3B6)),
                                         ),
@@ -351,7 +410,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                               const SizedBox(height: 24),
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withAlpha((0.9 * 255).toInt()),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: const Color(0xFF52B3B6)),
                                 ),
@@ -418,8 +477,16 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                           reminderTime: _selectedTime,
                                           category: _selectedCategory,
                                           duration: _selectedDuration,
-                                          deadline: DateTime.now().add(Duration(days: _selectedDurationDays)),
-                                          deadlineTime: _selectedDeadlineTime,
+                                          startDate: DateTime.now(),
+                                          endTime: _selectedDeadlineTime.hour >= 0 && _selectedDeadlineTime.minute >= 0
+                                              ? DateTime(
+                                                  DateTime.now().year,
+                                                  DateTime.now().month,
+                                                  DateTime.now().day,
+                                                  _selectedDeadlineTime.hour,
+                                                  _selectedDeadlineTime.minute,
+                                                )
+                                              : null,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).addHabit(habit);
                                         Navigator.pop(context);

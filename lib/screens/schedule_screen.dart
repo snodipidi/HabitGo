@@ -84,7 +84,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   },
                   calendarStyle: CalendarStyle(
                     todayDecoration: BoxDecoration(
-                      color: const Color(0xFF52B3B6).withOpacity(0.3),
+                      color: const Color(0xFF52B3B6).withAlpha((0.3 * 255).toInt()),
                       shape: BoxShape.circle,
                     ),
                     selectedDecoration: const BoxDecoration(
@@ -210,7 +210,7 @@ class _HabitCardState extends State<_HabitCard> with SingleTickerProviderStateMi
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withAlpha((0.9 * 255).toInt()),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -262,7 +262,7 @@ class _HabitCardState extends State<_HabitCard> with SingleTickerProviderStateMi
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${widget.habit.reminderTime.format(context)} – ${widget.habit.deadlineTime.format(context)}',
+                    '${widget.habit.reminderTime.format(context)} – ${widget.habit.endTime != null ? TimeOfDay.fromDateTime(widget.habit.endTime!).format(context) : "23:59"}',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF52B3B6),

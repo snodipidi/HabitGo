@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   GoogleSignIn get _googleSignIn => GoogleSignIn();
@@ -29,7 +30,7 @@ class AuthService {
       await _saveUserData(userCredential.user);
       return userCredential;
     } catch (e) {
-      print('Error signing in with Google: $e');
+      debugPrint('Error signing in with Google: $e');
       return null;
     }
   }

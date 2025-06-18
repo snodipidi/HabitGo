@@ -16,17 +16,17 @@ void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     // ignore: avoid_print
-    print('FLUTTER ERROR: ' + details.exceptionAsString());
+    debugPrint('FLUTTER ERROR: ' + details.exceptionAsString());
     if (details.stack != null) {
-      print(details.stack);
+      debugPrint(details.stack.toString());
     }
   };
   try {
     await Firebase.initializeApp();
-    print('Firebase initialized');
+    debugPrint('Firebase initialized');
   } catch (e, stack) {
-    print('FIREBASE INIT ERROR: $e');
-    print(stack);
+    debugPrint('FIREBASE INIT ERROR: $e');
+    debugPrint(stack.toString());
   }
   runApp(const MyApp());
 }
@@ -73,7 +73,7 @@ class _InitialScreenState extends State<InitialScreen> {
   }
 
   Future<void> _initializeApp() async {
-    print('Initializing user...');
+    debugPrint('Initializing user...');
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final recommendationsProvider = Provider.of<RecommendationsProvider>(context, listen: false);
     final levelProvider = Provider.of<LevelProvider>(context, listen: false);
@@ -82,20 +82,20 @@ class _InitialScreenState extends State<InitialScreen> {
     
     try {
       await userProvider.initializeUser();
-      print('User initialized: \\${userProvider.isInitialized}');
+      debugPrint('User initialized: \\${userProvider.isInitialized}');
     } catch (e, stack) {
-      print('USER INIT ERROR: $e');
-      print(stack);
+      debugPrint('USER INIT ERROR: $e');
+      debugPrint(stack.toString());
     }
     
     if (userProvider.isInitialized) {
       try {
-        print('Loading recommendations...');
+        debugPrint('Loading recommendations...');
         await recommendationsProvider.loadRecommendations();
-        print('Recommendations loaded');
+        debugPrint('Recommendations loaded');
       } catch (e, stack) {
-        print('RECOMMENDATIONS LOAD ERROR: $e');
-        print(stack);
+        debugPrint('RECOMMENDATIONS LOAD ERROR: $e');
+        debugPrint(stack.toString());
       }
     }
 

@@ -6,7 +6,6 @@ import 'package:habitgo/screens/habit_detail_screen.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:habitgo/screens/edit_habit_screen.dart';
 import 'package:habitgo/providers/category_provider.dart';
-import 'package:habitgo/models/user_level.dart';
 
 class MyHabitsScreen extends StatefulWidget {
   const MyHabitsScreen({super.key});
@@ -254,23 +253,9 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
     );
   }
 
-  void _showHabitDetails(BuildContext context, Habit habit) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HabitDetailScreen(habit: habit),
-      ),
-    );
-  }
-
   void _deleteHabit(BuildContext context, Habit habit) {
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
     habitProvider.removeHabit(habit.id);
-  }
-
-  void _completeHabit(BuildContext context, Habit habit) {
-    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-    habitProvider.markHabitComplete(habit.id, DateTime.now(), 10); // Award 10 XP for completing a habit
   }
 }
 
@@ -509,7 +494,7 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
           ),
           const SizedBox(height: 8),
           Text(
-            '${widget.habit.reminderTime.format(context)} – ${widget.habit.deadlineTime.format(context)}',
+            '${widget.habit.reminderTime.format(context)} – ${widget.habit.endTime != null ? TimeOfDay.fromDateTime(widget.habit.endTime!).format(context) : "23:59"}',
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF52B3B6),
@@ -541,7 +526,7 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha((0.1 * 255).toInt()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
