@@ -2,21 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:habitgo/providers/habit_provider.dart';
 import 'package:habitgo/models/habit.dart';
-import 'package:habitgo/screens/habit_detail_screen.dart';
 import 'package:habitgo/providers/user_provider.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:habitgo/screens/settings_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habitgo/screens/my_habits_screen.dart';
 import 'package:habitgo/screens/schedule_screen.dart';
 import 'package:habitgo/screens/archive_screen.dart';
-import 'package:habitgo/providers/recommendations_provider.dart';
 import 'package:habitgo/widgets/recommendations_section.dart';
 import 'package:habitgo/screens/create_habit_screen.dart';
-import 'package:habitgo/screens/edit_habit_screen.dart';
+import 'package:habitgo/screens/settings_screen.dart';
 import 'package:habitgo/providers/level_provider.dart';
 import 'package:habitgo/widgets/level_progress_circle.dart';
-import 'package:habitgo/models/user_level.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -265,20 +260,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showHabitDetails(BuildContext context, Habit habit) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => HabitDetailScreen(habit: habit),
-      ),
-    );
-  }
-
   void _deleteHabit(Habit habit) {
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
     habitProvider.removeHabit(habit.id);
   }
 }
-
 class _HabitListItem extends StatelessWidget {
   final Habit habit;
   final int index;
@@ -347,3 +333,4 @@ class _HabitListItem extends StatelessWidget {
     );
   }
 }
+

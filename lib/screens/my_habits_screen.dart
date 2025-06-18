@@ -141,7 +141,8 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    ...categoryProvider.categories.map((category) {
+                    // Показываем базовые категории
+                    ...categoryProvider.baseCategories.map((category) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChip(
@@ -175,6 +176,44 @@ class _MyHabitsScreenState extends State<MyHabitsScreen> {
                         ),
                       );
                     }).toList(),
+                    // Показываем пользовательские категории, если они есть
+                    if (categoryProvider.customCategories.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      ...categoryProvider.customCategories.map((category) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  category.icon,
+                                  size: 18,
+                                  color: _selectedCategory == category.label
+                                      ? Colors.white
+                                      : const Color(0xFF52B3B6),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(category.label),
+                              ],
+                            ),
+                            selected: _selectedCategory == category.label,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = selected ? category.label : null;
+                              });
+                            },
+                            backgroundColor: Colors.white,
+                            selectedColor: const Color(0xFF52B3B6),
+                            labelStyle: TextStyle(
+                              color: _selectedCategory == category.label
+                                  ? Colors.white
+                                  : const Color(0xFF225B6A),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ],
                 ),
               ),

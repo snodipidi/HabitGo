@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habitgo/models/category.dart';
+import 'package:provider/provider.dart';
+import 'package:habitgo/providers/category_provider.dart';
 
 class CategorySelectionScreen extends StatefulWidget {
   const CategorySelectionScreen({super.key});
@@ -9,17 +11,17 @@ class CategorySelectionScreen extends StatefulWidget {
 }
 
 class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
-  final List<Category> _categories = [
-    Category(label: 'Физическое здоровье', icon: Icons.fitness_center),
-    Category(label: 'Психическое здоровье', icon: Icons.self_improvement),
-    Category(label: 'Самообразование', icon: Icons.school),
-    Category(label: 'Творчество', icon: Icons.brush),
-    Category(label: 'Навыки и карьера', icon: Icons.work_outline),
-    Category(label: 'Быт и дисциплина', icon: Icons.home),
-    Category(label: 'Социальные действия', icon: Icons.people_outline),
-    Category(label: 'Развлечения с пользой', icon: Icons.extension),
-    Category(label: 'Другое', icon: Icons.more_horiz),
-  ];
+  late List<Category> _categories;
+
+  @override
+  void initState() {
+    super.initState();
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    _categories = [
+      ...categoryProvider.baseCategories,
+      Category(label: 'Другое', icon: Icons.more_horiz),
+    ];
+  }
 
   void _addCustomCategory() async {
     String? newLabel;
@@ -157,10 +159,14 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
                           ),
                           onPressed: () {
                             if (newLabel != null && newLabel!.trim().isNotEmpty) {
-                              final newCategory = Category(label: newLabel!.trim(), icon: newIcon!);
-                              setState(() {
-                                _categories.insert(_categories.length - 1, newCategory);
-                              });
+                              final newCategory = Category(
+                                label: newLabel!.trim(),
+                                icon: newIcon!,
+                                isCustom: true,
+                              );
+                              // Добавляем категорию в провайдер
+                              final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+                              categoryProvider.addCategory(newCategory);
                               Navigator.of(context).pop();
                               Navigator.of(context).pop(newCategory);
                             }
@@ -213,32 +219,43 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen> {
                 ),
               ),
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(24.0),
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final category = _categories[index];
-                    return GestureDetector(
-                      onTap: () {
-                        if (category.label == 'Другое') {
-                          _addCustomCategory();
-                        } else {
-                          Navigator.pop(context, category);
-                        }
-                      },
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                        margin: const EdgeInsets.symmetric(vertical: 10),
-                        child: ListTile(
-                          leading: Icon(category.icon, size: 32, color: const Color(0xFF52B3B6)),
-                          title: Text(
-                            category.label,
-                            style: const TextStyle(fontSize: 18, color: Color(0xFF225B6A), fontWeight: FontWeight.w600),
+                child: Consumer<CategoryProvider>(
+                  builder: (context, categoryProvider, child) {
+                    // Обновляем список категорий при изменении в провайдере
+                    _categories = [
+                      ...categoryProvider.baseCategories,
+                      ...categoryProvider.customCategories,
+                      Category(label: 'Другое', icon: Icons.more_horiz),
+                    ];
+                    
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(24.0),
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        return GestureDetector(
+                          onTap: () {
+                            if (category.label == 'Другое') {
+                              _addCustomCategory();
+                            } else {
+                              Navigator.pop(context, category);
+                            }
+                          },
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                            margin: const EdgeInsets.symmetric(vertical: 10),
+                            child: ListTile(
+                              leading: Icon(category.icon, size: 32, color: const Color(0xFF52B3B6)),
+                              title: Text(
+                                category.label,
+                                style: const TextStyle(fontSize: 18, color: Color(0xFF225B6A), fontWeight: FontWeight.w600),
+                              ),
+                              trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFF52B3B6)),
+                            ),
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFF52B3B6)),
-                        ),
-                      ),
+                        );
+                      },
                     );
                   },
                 ),

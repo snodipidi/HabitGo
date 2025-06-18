@@ -3,12 +3,12 @@ import 'package:habitgo/models/habit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:habitgo/providers/level_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:habitgo/main.dart';
+import 'package:habitgo/providers/category_provider.dart';
 
 class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
   LevelProvider? _levelProvider;
+  CategoryProvider? _categoryProvider;
 
   List<Habit> get habits => [..._habits];
   
@@ -37,6 +37,10 @@ class HabitProvider with ChangeNotifier {
     _levelProvider = levelProvider;
   }
 
+  void setCategoryProvider(CategoryProvider categoryProvider) {
+    _categoryProvider = categoryProvider;
+  }
+
   Future<void> _loadHabits() async {
     final prefs = await SharedPreferences.getInstance();
     final habitsJson = prefs.getStringList('habits') ?? [];
@@ -52,6 +56,8 @@ class HabitProvider with ChangeNotifier {
         .map((habit) => jsonEncode(habit.toJson()))
         .toList();
     await prefs.setStringList('habits', habitsJson);
+    // Очищаем неиспользуемые категории после сохранения привычек
+    _categoryProvider?.cleanupUnusedCategories();
   }
 
   void addHabit(Habit habit) {
@@ -100,8 +106,21 @@ class HabitProvider with ChangeNotifier {
         isCompleted: false,
       );
       _habits[index].uncompleteForDate(date);
+      
+      // Восстанавливаем пользовательскую категорию, если она была
+      if (_habits[index].category.isCustom) {
+        _categoryProvider?.addCategory(_habits[index].category);
+      }
+      
       _saveHabits();
       notifyListeners();
     }
+  }
+
+  // Проверяет, используется ли категория в активных привычках
+  bool isCategoryInUse(String categoryLabel) {
+    return _habits.any((habit) => 
+      habit.category.label == categoryLabel && !habit.isCompleted
+    );
   }
 } 

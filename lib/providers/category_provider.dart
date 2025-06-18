@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:habitgo/models/category.dart';
+import 'package:habitgo/providers/habit_provider.dart';
 
 class CategoryProvider with ChangeNotifier {
   List<Category> _categories = [
@@ -13,13 +14,24 @@ class CategoryProvider with ChangeNotifier {
     Category(label: 'Быт и дисциплина', icon: Icons.home),
     Category(label: 'Социальные действия', icon: Icons.people_outline),
     Category(label: 'Развлечения с пользой', icon: Icons.extension),
-    Category(label: 'Другое', icon: Icons.more_horiz),
   ];
 
+  HabitProvider? _habitProvider;
+
   List<Category> get categories => [..._categories];
+  
+  // Получаем только базовые категории
+  List<Category> get baseCategories => _categories.where((cat) => !cat.isCustom).toList();
+  
+  // Получаем только пользовательские категории
+  List<Category> get customCategories => _categories.where((cat) => cat.isCustom).toList();
 
   CategoryProvider() {
     _loadCategories();
+  }
+
+  void setHabitProvider(HabitProvider habitProvider) {
+    _habitProvider = habitProvider;
   }
 
   Future<void> _loadCategories() async {
@@ -43,12 +55,11 @@ class CategoryProvider with ChangeNotifier {
   }
 
   void addCategory(Category category) {
-    // Find the index of "Другое" category
-    final otherIndex = _categories.indexWhere((cat) => cat.label == 'Другое');
-    // Insert new category before "Другое"
-    _categories.insert(otherIndex, category);
-    _saveCategories();
-    notifyListeners();
+    if (!_categories.any((cat) => cat.label == category.label)) {
+      _categories.add(category);
+      _saveCategories();
+      notifyListeners();
+    }
   }
 
   void removeCategory(Category category) {
@@ -56,6 +67,20 @@ class CategoryProvider with ChangeNotifier {
       _categories.removeWhere((cat) => cat.label == category.label);
       _saveCategories();
       notifyListeners();
+    }
+  }
+
+  // Метод для проверки, используется ли категория в привычках
+  bool isCategoryInUse(String categoryLabel) {
+    if (_habitProvider == null) return false;
+    return _habitProvider!.isCategoryInUse(categoryLabel);
+  }
+
+  // Метод для очистки неиспользуемых пользовательских категорий
+  void cleanupUnusedCategories() {
+    final unusedCategories = customCategories.where((category) => !isCategoryInUse(category.label));
+    for (var category in unusedCategories) {
+      removeCategory(category);
     }
   }
 } 

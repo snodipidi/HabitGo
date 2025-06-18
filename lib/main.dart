@@ -78,6 +78,7 @@ class _InitialScreenState extends State<InitialScreen> {
     final recommendationsProvider = Provider.of<RecommendationsProvider>(context, listen: false);
     final levelProvider = Provider.of<LevelProvider>(context, listen: false);
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     
     try {
       await userProvider.initializeUser();
@@ -101,6 +102,8 @@ class _InitialScreenState extends State<InitialScreen> {
     // Connect providers
     levelProvider.setUserProvider(userProvider);
     habitProvider.setLevelProvider(levelProvider);
+    habitProvider.setCategoryProvider(categoryProvider);
+    categoryProvider.setHabitProvider(habitProvider);
   }
 
   @override

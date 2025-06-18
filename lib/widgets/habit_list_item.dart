@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:habitgo/models/habit.dart';
 import 'package:habitgo/providers/habit_provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:habitgo/screens/add_habit_screen.dart';
+import 'package:habitgo/screens/edit_habit_screen.dart';
 
 class HabitListItem extends StatelessWidget {
   final Habit habit;
@@ -31,7 +31,7 @@ class HabitListItem extends StatelessWidget {
           children: [
             SlidableAction(
               onPressed: (_) {
-                habitProvider.markHabitComplete(habit.id, DateTime.now());
+                habitProvider.markHabitComplete(habit.id, DateTime.now(), habit.calculateXp());
               },
               backgroundColor: const Color(0xFF26B3B6),
               foregroundColor: Colors.white,
@@ -42,8 +42,8 @@ class HabitListItem extends StatelessWidget {
               onPressed: (_) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => AddHabitScreen(
-                      habitToEdit: habit,
+                    builder: (_) => EditHabitScreen(
+                      habit: habit,
                     ),
                   ),
                 );
