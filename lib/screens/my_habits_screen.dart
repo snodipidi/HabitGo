@@ -500,6 +500,79 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
               color: Color(0xFF52B3B6),
             ),
           ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+              Text(
+                '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}%',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: widget.habit.completedDates.length / widget.habit.durationDays,
+              backgroundColor: const Color(0xFFE0E0E0),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF52B3B6)),
+              minHeight: 6,
+            ),
+          ),
+          if (widget.habit.needsExtension()) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange.withAlpha((0.2 * 255).toInt()),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.orange.withAlpha((0.5 * 255).toInt()),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.schedule,
+                    size: 14,
+                    color: Colors.orange[700],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Продлено на ${widget.habit.getMissedDaysCount()} дн.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (widget.habit.getExtendedDeadline() != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'До ${widget.habit.getExtendedDeadline()!.day}.${widget.habit.getExtendedDeadline()!.month}.${widget.habit.getExtendedDeadline()!.year}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.orange[700],
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );

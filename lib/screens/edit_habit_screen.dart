@@ -411,6 +411,58 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 24),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha((0.9 * 255).toInt()),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFF52B3B6)),
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text(
+                                          'Текущий прогресс',
+                                          style: TextStyle(
+                                            color: Color(0xFF52B3B6),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
+                                          style: const TextStyle(
+                                            color: Color(0xFF225B6A),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: LinearProgressIndicator(
+                                        value: widget.habit.completedDates.length / widget.habit.durationDays,
+                                        backgroundColor: const Color(0xFFE0E0E0),
+                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF52B3B6)),
+                                        minHeight: 8,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}% выполнено',
+                                      style: const TextStyle(
+                                        color: Color(0xFF225B6A),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               const SizedBox(height: 36),
                               SizedBox(
                                 height: 60,
@@ -425,10 +477,12 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                           id: widget.habit.id,
                                           title: _titleController.text,
                                           description: _descriptionController.text,
+                                          completedDates: widget.habit.completedDates,
                                           selectedWeekdays: _selectedWeekdays,
                                           reminderTime: _selectedTime,
                                           category: _selectedCategory,
                                           duration: _selectedDuration,
+                                          deadline: widget.habit.deadline,
                                           startDate: widget.habit.startDate,
                                           endTime: DateTime(
                                             DateTime.now().year,
@@ -439,6 +493,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                           ),
                                           createdAt: widget.habit.createdAt,
                                           durationDays: _selectedDurationDays,
+                                          xpPerCompletion: widget.habit.xpPerCompletion,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).updateHabit(habit);
                                         Navigator.pop(context, habit);

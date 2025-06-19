@@ -119,81 +119,149 @@ class AchievementsScreen extends StatelessWidget {
                         separatorBuilder: (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final habit = completedHabits[index];
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withAlpha((0.9 * 255).toInt()),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                              border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                            child: Row(
-                              children: [
-                                Icon(habit.category.icon, color: const Color(0xFF52B3B6)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        habit.title,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF225B6A),
-                                        ),
-                                      ),
-                                      if (habit.description.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          habit.description,
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Color(0xFF225B6A),
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            habit.reminderTime.format(context),
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black45,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.restore, color: Color(0xFF52B3B6)),
-                                  onPressed: () {
-                                    habitProvider.markHabitIncomplete(habit.id, DateTime.now());
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Привычка восстановлена!')),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
+                          return _AchievementListItem(
+                            habit: habit,
+                            onRestore: () {
+                              habitProvider.markHabitIncomplete(habit.id, DateTime.now());
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Привычка восстановлена!')),
+                              );
+                            },
                           );
                         },
                       ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AchievementListItem extends StatefulWidget {
+  final Habit habit;
+  final VoidCallback onRestore;
+
+  const _AchievementListItem({
+    required this.habit,
+    required this.onRestore,
+  });
+
+  @override
+  State<_AchievementListItem> createState() => _AchievementListItemState();
+}
+
+class _AchievementListItemState extends State<_AchievementListItem> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _heightFactor;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _toggleExpanded,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha((0.9 * 255).toInt()),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: const Color(0xFF52B3B6), width: 1.5),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          children: [
+            Icon(widget.habit.category.icon, color: const Color(0xFF52B3B6)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.habit.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF225B6A),
+                    ),
+                  ),
+                  if (widget.habit.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return ClipRect(
+                          child: Align(
+                            heightFactor: _heightFactor.value,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Text(
+                        widget.habit.description,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF225B6A),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 18, color: Color(0xFF52B3B6)),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.habit.reminderTime.format(context),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.restore, color: Color(0xFF52B3B6)),
+              onPressed: widget.onRestore,
+            ),
+          ],
         ),
       ),
     );

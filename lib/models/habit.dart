@@ -182,6 +182,98 @@ class Habit {
     return getCompletedDaysThisWeek() / selectedWeekdays.length;
   }
 
+  // Получает следующую запланированную дату после указанной даты
+  DateTime getNextScheduledDate(DateTime after) {
+    DateTime date = after;
+    while (true) {
+      date = date.add(const Duration(days: 1));
+      if (selectedWeekdays.contains(date.weekday)) {
+        return date;
+      }
+    }
+  }
+
+  // Подсчитывает количество пропущенных дней по расписанию
+  int getMissedDaysCount() {
+    final now = DateTime.now();
+    DateTime current = startDate;
+    int missedCount = 0;
+
+    while (current.isBefore(now)) {
+      if (selectedWeekdays.contains(current.weekday)) {
+        final isCompleted = completedDates.any((d) => 
+          d.year == current.year && 
+          d.month == current.month && 
+          d.day == current.day
+        );
+        
+        if (!isCompleted) {
+          // Проверяем, истекло ли время выполнения для этого дня
+          DateTime? dayEndTime;
+          if (endTime != null) {
+            dayEndTime = DateTime(
+              current.year,
+              current.month,
+              current.day,
+              endTime!.hour,
+              endTime!.minute,
+            );
+          } else {
+            // Если время окончания не задано, считаем концом дня 23:59
+            dayEndTime = DateTime(
+              current.year,
+              current.month,
+              current.day,
+              23,
+              59,
+            );
+          }
+          
+          // День считается пропущенным только если время выполнения истекло
+          if (now.isAfter(dayEndTime)) {
+            missedCount++;
+          }
+        }
+      }
+      current = current.add(const Duration(days: 1));
+    }
+
+    return missedCount;
+  }
+
+  // Проверяет, нужно ли продлить привычку
+  bool needsExtension() {
+    return getMissedDaysCount() > 0;
+  }
+
+  // Возвращает новую дату окончания с учетом пропущенных дней
+  DateTime? getExtendedDeadline() {
+    if (!needsExtension()) return deadline;
+    
+    final missedDays = getMissedDaysCount();
+    if (deadline == null) return null;
+
+    DateTime extendedDate = deadline!;
+    int daysToAdd = 0;
+    while (daysToAdd < missedDays) {
+      extendedDate = getNextScheduledDate(extendedDate);
+      daysToAdd++;
+    }
+    
+    return extendedDate;
+  }
+
+  // Проверяет, является ли дата продленной (добавленной из-за пропусков)
+  bool isExtendedDate(DateTime date) {
+    if (!needsExtension()) return false;
+    
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final originalEndDate = startDate.add(Duration(days: durationDays));
+    
+    // Дата считается продленной, если она после оригинальной даты окончания
+    return normalizedDate.isAfter(originalEndDate);
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

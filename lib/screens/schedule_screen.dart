@@ -30,14 +30,24 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       final completed = habit.completedDates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
       final List<DateTime> scheduledDates = [];
       DateTime current = DateTime(habit.startDate.year, habit.startDate.month, habit.startDate.day);
-      int needed = habit.durationDays;
-      int skips = 0;
-      while (scheduledDates.length < needed) {
+      
+      // Определяем общее количество дней для привычки
+      int totalDays = habit.durationDays;
+      
+      // Если привычка была продлена, добавляем пропущенные дни
+      if (habit.needsExtension()) {
+        totalDays += habit.getMissedDaysCount();
+      }
+      
+      // Генерируем все запланированные даты
+      while (scheduledDates.length < totalDays) {
         if (habit.selectedWeekdays.contains(current.weekday)) {
           scheduledDates.add(current);
         }
         current = current.add(const Duration(days: 1));
       }
+      
+      // Проверяем, есть ли привычка на выбранный день
       return scheduledDates.any((d) => d.year == day.year && d.month == day.month && d.day == day.day);
     }).toList();
   }
@@ -140,15 +150,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         final isCompleted = habit.completedDates.any((d) => d.year == date.year && d.month == date.month && d.day == date.day);
                         final now = DateTime.now();
                         final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
-                        DateTime? endDateTime;
+                        DateTime endDateTime;
                         if (habit.endTime != null) {
                           endDateTime = DateTime(date.year, date.month, date.day, habit.endTime!.hour, habit.endTime!.minute);
                         } else {
                           endDateTime = DateTime(date.year, date.month, date.day, 23, 59);
                         }
+                        
+                        // Проверяем, является ли эта дата продленной
+                        final isExtendedDate = habit.isExtendedDate(date);
+                        
                         if (isCompleted) {
                           done++;
-                        } else if (now.isAfter(endDateTime)) {
+                        } else if (now.isAfter(endDateTime) && !isExtendedDate) {
                           missed++;
                         } else {
                           waiting++;
@@ -162,11 +176,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       } else if (waiting > 0 || (done < habitsForDay.length && missed > 0)) {
                         color = Colors.yellow[700];
                       }
+                      
+                      // Проверяем, есть ли продленные привычки на этот день
+                      bool hasExtendedHabits = habitsForDay.any((habit) => 
+                        habit.isExtendedDate(date)
+                      );
+                      
                       if (color != null) {
                         return Container(
                           decoration: BoxDecoration(
                             color: color,
                             shape: BoxShape.circle,
+                            border: hasExtendedHabits ? Border.all(
+                              color: Colors.orange,
+                              width: 2,
+                            ) : null,
                           ),
                           child: Center(
                             child: Text(
@@ -250,13 +274,114 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       Icon(habit.category.icon, color: borderColor, size: 24),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          habit.title,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: borderColor,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              habit.title,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: borderColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 16,
+                                  color: borderColor.withAlpha((0.8 * 255).toInt()),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${habit.reminderTime.format(context)} – ${habit.endTime != null ? TimeOfDay.fromDateTime(habit.endTime!).format(context) : "23:59"}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: borderColor.withAlpha((0.8 * 255).toInt()),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '${habit.completedDates.length}/${habit.durationDays} дней',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: borderColor.withAlpha((0.8 * 255).toInt()),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(habit.completedDates.length / habit.durationDays * 100).toInt()}%',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: borderColor.withAlpha((0.8 * 255).toInt()),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: LinearProgressIndicator(
+                                    value: habit.completedDates.length / habit.durationDays,
+                                    backgroundColor: const Color(0xFFE0E0E0),
+                                    valueColor: AlwaysStoppedAnimation<Color>(borderColor),
+                                    minHeight: 6,
+                                  ),
+                                ),
+                                if (habit.needsExtension()) ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.withAlpha((0.2 * 255).toInt()),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.orange.withAlpha((0.5 * 255).toInt()),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.schedule,
+                                          size: 14,
+                                          color: Colors.orange[700],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Продлено на ${habit.getMissedDaysCount()} дн.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.orange[700],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (habit.getExtendedDeadline() != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'До ${habit.getExtendedDeadline()!.day}.${habit.getExtendedDeadline()!.month}.${habit.getExtendedDeadline()!.year}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.orange[700],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),

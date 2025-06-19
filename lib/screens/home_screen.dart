@@ -265,7 +265,8 @@ class _HomeScreenState extends State<HomeScreen> {
     habitProvider.removeHabit(habit.id);
   }
 }
-class _HabitListItem extends StatelessWidget {
+
+class _HabitListItem extends StatefulWidget {
   final Habit habit;
   final int index;
   final VoidCallback onDelete;
@@ -279,13 +280,49 @@ class _HabitListItem extends StatelessWidget {
   });
 
   @override
+  State<_HabitListItem> createState() => _HabitListItemState();
+}
+
+class _HabitListItemState extends State<_HabitListItem> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _heightFactor;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isCompleted = habit.isCompletedToday;
-    final xp = habit.todayXp;
+    final isCompleted = widget.habit.isCompletedToday;
+    final xp = widget.habit.todayXp;
     final now = DateTime.now();
     DateTime endDateTime;
-    if (habit.endTime != null) {
-      endDateTime = DateTime(now.year, now.month, now.day, habit.endTime!.hour, habit.endTime!.minute);
+    if (widget.habit.endTime != null) {
+      endDateTime = DateTime(now.year, now.month, now.day, widget.habit.endTime!.hour, widget.habit.endTime!.minute);
     } else {
       endDateTime = DateTime(now.year, now.month, now.day, 23, 59);
     }
@@ -296,7 +333,7 @@ class _HabitListItem extends StatelessWidget {
         if (details.primaryVelocity! > 0 && !isCompleted && !isExpired) {
           // Свайп вправо - отметить как выполненное
           final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-          habitProvider.markHabitCompletedForToday(habit.id);
+          habitProvider.markHabitCompletedForToday(widget.habit.id);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(xp > 0 ? 'Получено $xp XP!' : 'Привычка уже выполнена сегодня'),
@@ -305,6 +342,7 @@ class _HabitListItem extends StatelessWidget {
           );
         }
       },
+      onTap: _toggleExpanded,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
@@ -334,7 +372,7 @@ class _HabitListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  habit.category.icon,
+                  widget.habit.category.icon,
                   color: isCompleted 
                     ? Colors.green 
                     : isExpired 
@@ -345,7 +383,7 @@ class _HabitListItem extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    habit.title,
+                    widget.habit.title,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -381,21 +419,150 @@ class _HabitListItem extends StatelessWidget {
                   ),
               ],
             ),
-            if (habit.description.isNotEmpty) ...[
+            if (widget.habit.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
-                habit.description,
-                style: TextStyle(
-                  fontSize: 14,
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return ClipRect(
+                    child: Align(
+                      heightFactor: _heightFactor.value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Text(
+                  widget.habit.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isCompleted 
+                      ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                      : isExpired 
+                        ? Colors.red.withAlpha((0.8 * 255).toInt())
+                        : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 16,
                   color: isCompleted 
                     ? Colors.green.withAlpha((0.8 * 255).toInt()) 
                     : isExpired 
                       ? Colors.red.withAlpha((0.8 * 255).toInt())
                       : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
-                  fontStyle: FontStyle.italic,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  '${widget.habit.reminderTime.format(context)} – ${widget.habit.endTime != null ? TimeOfDay.fromDateTime(widget.habit.endTime!).format(context) : "23:59"}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isCompleted 
+                      ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                      : isExpired 
+                        ? Colors.red.withAlpha((0.8 * 255).toInt())
+                        : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isCompleted 
+                          ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                          : isExpired 
+                            ? Colors.red.withAlpha((0.8 * 255).toInt())
+                            : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                      ),
+                    ),
+                    Text(
+                      '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}%',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isCompleted 
+                          ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                          : isExpired 
+                            ? Colors.red.withAlpha((0.8 * 255).toInt())
+                            : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: widget.habit.completedDates.length / widget.habit.durationDays,
+                    backgroundColor: const Color(0xFFE0E0E0),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isCompleted 
+                        ? Colors.green 
+                        : isExpired 
+                          ? Colors.red 
+                          : const Color(0xFF52B3B6),
+                    ),
+                    minHeight: 6,
+                  ),
+                ),
+                if (widget.habit.needsExtension()) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withAlpha((0.2 * 255).toInt()),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.orange.withAlpha((0.5 * 255).toInt()),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 14,
+                          color: Colors.orange[700],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Продлено на ${widget.habit.getMissedDaysCount()} дн.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.habit.getExtendedDeadline() != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'До ${widget.habit.getExtendedDeadline()!.day}.${widget.habit.getExtendedDeadline()!.month}.${widget.habit.getExtendedDeadline()!.year}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.orange[700],
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
           ],
         ),
       ),

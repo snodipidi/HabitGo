@@ -47,6 +47,10 @@ class HabitProvider with ChangeNotifier {
     _habits = habitsJson
         .map((json) => Habit.fromJson(jsonDecode(json)))
         .toList();
+    
+    // Проверяем и продлеваем привычки при загрузке
+    await checkAndExtendHabits();
+    
     notifyListeners();
   }
 
@@ -159,5 +163,30 @@ class HabitProvider with ChangeNotifier {
     return _habits.any((habit) => 
       habit.category.label == categoryLabel && !habit.isCompleted
     );
+  }
+
+  // Проверяет и продлевает привычки с пропущенными днями
+  Future<void> checkAndExtendHabits() async {
+    bool hasChanges = false;
+    for (final habit in _habits) {
+      if (!habit.isCompleted && habit.needsExtension()) {
+        final newDeadline = habit.getExtendedDeadline();
+        if (newDeadline != null && (habit.deadline == null || newDeadline.isAfter(habit.deadline!))) {
+          final index = _habits.indexWhere((h) => h.id == habit.id);
+          if (index != -1) {
+            _habits[index] = habit.copyWith(
+              deadline: newDeadline,
+              durationDays: habit.durationDays + habit.getMissedDaysCount(),
+            );
+            hasChanges = true;
+          }
+        }
+      }
+    }
+
+    if (hasChanges) {
+      await _saveHabits();
+      notifyListeners();
+    }
   }
 } 
