@@ -4,12 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:habitgo/providers/level_provider.dart';
 import 'package:habitgo/providers/category_provider.dart';
+import 'package:habitgo/providers/achievement_provider.dart';
 import 'package:flutter/material.dart';
 
 class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
   LevelProvider? _levelProvider;
   CategoryProvider? _categoryProvider;
+  AchievementProvider? _achievementProvider;
 
   List<Habit> get habits => [..._habits];
   
@@ -42,6 +44,10 @@ class HabitProvider with ChangeNotifier {
     _categoryProvider = categoryProvider;
   }
 
+  void setAchievementProvider(AchievementProvider achievementProvider) {
+    _achievementProvider = achievementProvider;
+  }
+
   Future<void> _loadHabits() async {
     final prefs = await SharedPreferences.getInstance();
     final habitsJson = prefs.getStringList('habits') ?? [];
@@ -69,12 +75,18 @@ class HabitProvider with ChangeNotifier {
     _habits.add(habit);
     _saveHabits();
     notifyListeners();
+    
+    // Проверяем достижения за создание привычек
+    _achievementProvider?.checkTotalHabitsAchievements();
   }
 
   void removeHabit(String id) {
     _habits.removeWhere((habit) => habit.id == id);
     _saveHabits();
     notifyListeners();
+    
+    // Проверяем достижения за количество привычек
+    _achievementProvider?.checkTotalHabitsAchievements();
   }
 
   void updateHabit(Habit habit) {
@@ -133,13 +145,20 @@ class HabitProvider with ChangeNotifier {
       final habit = _habits[index];
       if (!habit.isCompletedToday) {
         final xp = habit.todayXp;
-        habit.completeForDate(DateTime.now());
+        final completionTime = DateTime.now();
+        habit.completeForDate(completionTime);
         await _saveHabits();
         
         // Начисляем XP через LevelProvider
         if (_levelProvider != null && xp > 0) {
           await _levelProvider!.completeTask(xp);
         }
+        
+        // Проверяем достижения
+        _achievementProvider?.checkTimeBasedAchievements(habit, completionTime);
+        _achievementProvider?.checkWeekendAchievements();
+        _achievementProvider?.checkPerfectWeekAchievements();
+        _achievementProvider?.checkConsistencyAchievements();
         
         notifyListeners();
         
@@ -241,6 +260,9 @@ class HabitProvider with ChangeNotifier {
     final isCompleted = habit.completedDates.length >= habit.durationDays;
 
     if (isCompleted && !habit.isCompleted) {
+      // Проверяем достижения за завершение привычки
+      _achievementProvider?.checkHabitCompletionAchievements(habit);
+      
       // Показываем диалог с предложением продления
       final shouldExtend = await _showCompletionDialog(context, habit);
       

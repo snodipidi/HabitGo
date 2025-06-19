@@ -107,21 +107,10 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addAchievement(String achievement) async {
-    if (_isLoading || _user == null) return;
-    
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      if (!_user!.achievements.contains(achievement)) {
-        _user!.achievements.add(achievement);
-        await _user!.saveToPrefs();
-      }
-    } catch (e) {
-      debugPrint('Error adding achievement: $e');
-    } finally {
-      _isLoading = false;
+  // Метод для сохранения пользователя (используется AchievementProvider)
+  Future<void> saveUser() async {
+    if (_user != null) {
+      await _user!.saveToPrefs();
       notifyListeners();
     }
   }

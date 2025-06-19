@@ -47,6 +47,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  String _getWeekdayShort(int weekday) {
+    switch (weekday) {
+      case 1:
+        return 'Пн';
+      case 2:
+        return 'Вт';
+      case 3:
+        return 'Ср';
+      case 4:
+        return 'Чт';
+      case 5:
+        return 'Пт';
+      case 6:
+        return 'Сб';
+      case 7:
+        return 'Вс';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final habitProvider = Provider.of<HabitProvider>(context, listen: true);
@@ -117,6 +138,124 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 22),
+                        // Мини-календарь на неделю
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha((0.9 * 255).toInt()),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Неделя',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF225B6A),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: List.generate(7, (index) {
+                                  // Получаем понедельник текущей недели
+                                  final now = DateTime.now();
+                                  final monday = now.subtract(Duration(days: now.weekday - 1));
+                                  final date = monday.add(Duration(days: index));
+                                  final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
+                                  final habitsForDay = habitProvider.habits.where((habit) {
+                                    if (habit.isCompleted) return false;
+                                    final isDayOfWeek = habit.selectedWeekdays.contains(date.weekday);
+                                    final isBeforeDeadline = habit.deadline == null || !date.isAfter(habit.deadline!);
+                                    final isAfterCreated = !date.isBefore(habit.createdAt);
+                                    return isDayOfWeek && isBeforeDeadline && isAfterCreated;
+                                  }).toList();
+                                  
+                                  int completedCount = 0;
+                                  int totalCount = habitsForDay.length;
+                                  
+                                  for (final habit in habitsForDay) {
+                                    final isCompleted = habit.completedDates.any((d) => 
+                                      d.year == date.year && 
+                                      d.month == date.month && 
+                                      d.day == date.day
+                                    );
+                                    if (isCompleted) completedCount++;
+                                  }
+                                  
+                                  Color? dayColor;
+                                  if (totalCount == 0) {
+                                    dayColor = Colors.grey[300];
+                                  } else if (completedCount == totalCount && totalCount > 0) {
+                                    dayColor = Colors.green;
+                                  } else if (completedCount > 0) {
+                                    dayColor = Colors.yellow[700];
+                                  } else if (date.isBefore(now) && date.day != now.day) {
+                                    dayColor = Colors.red;
+                                  } else {
+                                    dayColor = const Color(0xFF52B3B6);
+                                  }
+                                  
+                                  return Column(
+                                    children: [
+                                      Text(
+                                        _getWeekdayShort(date.weekday),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isToday ? const Color(0xFF52B3B6) : Colors.grey[600],
+                                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: dayColor,
+                                          shape: BoxShape.circle,
+                                          border: isToday ? Border.all(
+                                            color: const Color(0xFF52B3B6),
+                                            width: 2,
+                                          ) : null,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${date.day}',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      if (totalCount > 0) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '$completedCount/$totalCount',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: Color(0xFF225B6A),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         const Text(
                           'Задания на день',
                           style: TextStyle(

@@ -2,12 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_level.dart';
 import 'package:habitgo/providers/user_provider.dart';
+import 'package:habitgo/providers/achievement_provider.dart';
 
 class LevelProvider with ChangeNotifier {
   UserLevel? _userLevel;
   static const String _levelKey = 'user_level';
   static const String _xpKey = 'user_xp';
   UserProvider? _userProvider;
+  AchievementProvider? _achievementProvider;
 
   LevelProvider() {
     _loadUserLevel();
@@ -34,6 +36,10 @@ class LevelProvider with ChangeNotifier {
     _userProvider = userProvider;
   }
 
+  void setAchievementProvider(AchievementProvider achievementProvider) {
+    _achievementProvider = achievementProvider;
+  }
+
   Future<void> completeTask(int xp) async {
     if (xp <= 0) return;
     
@@ -56,6 +62,9 @@ class LevelProvider with ChangeNotifier {
     if (_userProvider != null && _userLevel!.level > prevLevel) {
       await _userProvider!.addCoins(20 * (_userLevel!.level - prevLevel));
     }
+    
+    // Проверяем достижения за серию дней
+    _achievementProvider?.checkStreakAchievements();
     
     // Уведомляем об изменениях
     notifyListeners();

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:habitgo/providers/habit_provider.dart';
 import 'package:habitgo/providers/user_provider.dart';
 import 'package:habitgo/providers/level_provider.dart';
+import 'package:habitgo/providers/achievement_provider.dart';
 import 'package:habitgo/screens/welcome_screen.dart';
 import 'package:habitgo/screens/home_screen.dart';
 import 'providers/recommendations_provider.dart';
@@ -43,6 +44,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RecommendationsProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => LevelProvider()),
+        ChangeNotifierProvider(create: (context) => AchievementProvider(
+          context.read<UserProvider>(),
+          context.read<HabitProvider>(),
+        )),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -79,6 +84,7 @@ class _InitialScreenState extends State<InitialScreen> {
     final levelProvider = Provider.of<LevelProvider>(context, listen: false);
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
     final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    final achievementProvider = Provider.of<AchievementProvider>(context, listen: false);
     
     try {
       await userProvider.initializeUser();
@@ -101,8 +107,10 @@ class _InitialScreenState extends State<InitialScreen> {
 
     // Connect providers
     levelProvider.setUserProvider(userProvider);
+    levelProvider.setAchievementProvider(achievementProvider);
     habitProvider.setLevelProvider(levelProvider);
     habitProvider.setCategoryProvider(categoryProvider);
+    habitProvider.setAchievementProvider(achievementProvider);
     categoryProvider.setHabitProvider(habitProvider);
   }
 

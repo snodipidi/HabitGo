@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:habitgo/providers/level_provider.dart';
 import 'package:habitgo/providers/user_provider.dart';
+import 'package:habitgo/providers/achievement_provider.dart';
 import 'package:habitgo/widgets/level_progress_circle.dart';
 import 'package:habitgo/services/auth_service.dart';
 import 'package:habitgo/screens/shop_screen.dart';
+import 'package:habitgo/screens/achievement_system_screen.dart';
 import 'package:habitgo/widgets/statistics_card.dart';
+import 'package:habitgo/models/achievement.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -14,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final levelProvider = Provider.of<LevelProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
+    final achievementProvider = Provider.of<AchievementProvider>(context);
     final userLevel = levelProvider.userLevel;
     final authService = AuthService();
 
@@ -81,10 +85,6 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                  // БЕЛАЯ КАРТОЧКА С УРОВНЕМ
-                  //    Container(
-                  //      ...
-                  //    ),
                   // КНОПКА GOOGLE
                   SizedBox(
                     width: double.infinity,
@@ -108,8 +108,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // СТАТИСТИКА
-                  //    const StatisticsCard(),
                   // ОТДЕЛЬНАЯ КАРТОЧКА НАСТРОЕК
                   Container(
                     width: double.infinity,
@@ -154,60 +152,143 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // Достижения
-                  const Text(
-                    'Достижения',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF225B6A),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (userProvider.user?.achievements.isEmpty ?? true)
-                          const Center(
-                            child: Text(
-                              'Пока нет достижений',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
+                  // Достижения - теперь кликабельная секция
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AchievementSystemScreen()),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Достижения',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF225B6A),
+                                ),
                               ),
-                            ),
-                          )
-                        else
-                          ...userProvider.user!.achievements.map((achievement) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: Row(
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF52B3B6),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${userProvider.user?.unlockedAchievementsCount ?? 0}/${userProvider.user?.totalAchievementsCount ?? 0}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: Color(0xFF52B3B6),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (userProvider.user?.achievements.isEmpty ?? true)
+                            const Row(
                               children: [
-                                const Icon(Icons.emoji_events, color: Color(0xFF52B3B6)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  achievement,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFF225B6A),
+                                Icon(
+                                  Icons.emoji_events_outlined,
+                                  size: 24,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Пока нет достижений',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ),
                               ],
+                            )
+                          else
+                            Column(
+                              children: [
+                                ...userProvider.user!.getAllAchievements()
+                                    .where((achievement) => achievement.isUnlocked)
+                                    .take(3)
+                                    .map((achievement) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 8.0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            achievement.icon,
+                                            color: achievement.color,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              achievement.title,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Color(0xFF225B6A),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )),
+                                if (userProvider.user!.getAllAchievements()
+                                        .where((achievement) => achievement.isUnlocked)
+                                        .length > 3)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      'И еще ${userProvider.user!.getAllAchievements().where((achievement) => achievement.isUnlocked).length - 3}...',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF52B3B6),
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          )),
-                      ],
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Нажмите, чтобы посмотреть все достижения',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF52B3B6),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),

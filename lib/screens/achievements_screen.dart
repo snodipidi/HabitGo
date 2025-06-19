@@ -15,25 +15,10 @@ class AchievementsScreen extends StatelessWidget {
     final completedHabits = habitProvider.completedHabits;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF225B6A)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Достижения',
-          style: TextStyle(
-            color: Color(0xFF225B6A),
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -44,6 +29,29 @@ class AchievementsScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
+              // Заголовок и кнопка назад
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF225B6A)),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 4),
+                    const Expanded(
+                      child: Text(
+                        'Достижения',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF225B6A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               // Рамка с уровнем
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
