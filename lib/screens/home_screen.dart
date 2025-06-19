@@ -6,7 +6,7 @@ import 'package:habitgo/providers/user_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:habitgo/screens/my_habits_screen.dart';
 import 'package:habitgo/screens/schedule_screen.dart';
-import 'package:habitgo/screens/archive_screen.dart';
+import 'package:habitgo/screens/achievements_screen.dart';
 import 'package:habitgo/widgets/recommendations_section.dart';
 import 'package:habitgo/screens/create_habit_screen.dart';
 import 'package:habitgo/screens/settings_screen.dart';
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else if (index == 3) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const ArchiveScreen()),
+        MaterialPageRoute(builder: (context) => const AchievementsScreen()),
       );
     } else if (index == 4) {
       Navigator.of(context).push(
@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: '',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.archive_outlined),
+                  icon: Icon(Icons.emoji_events_outlined),
                   label: '',
                 ),
                 BottomNavigationBarItem(
@@ -283,7 +283,13 @@ class _HabitListItem extends StatelessWidget {
     final isCompleted = habit.isCompletedToday;
     final xp = habit.todayXp;
     final now = DateTime.now();
-    final isExpired = habit.endTime != null && now.isAfter(habit.endTime!);
+    DateTime endDateTime;
+    if (habit.endTime != null) {
+      endDateTime = DateTime(now.year, now.month, now.day, habit.endTime!.hour, habit.endTime!.minute);
+    } else {
+      endDateTime = DateTime(now.year, now.month, now.day, 23, 59);
+    }
+    final isExpired = now.isAfter(endDateTime);
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {

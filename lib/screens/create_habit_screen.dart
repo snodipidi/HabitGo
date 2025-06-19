@@ -487,6 +487,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                                                   _selectedDeadlineTime.minute,
                                                 )
                                               : null,
+                                          durationDays: _selectedDurationDays,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).addHabit(habit);
                                         Navigator.pop(context);

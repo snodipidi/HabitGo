@@ -48,6 +48,7 @@ class Habit {
   final DateTime startDate;
   final DateTime? endTime;
   final int xpPerCompletion;
+  final int durationDays;
 
   Habit({
     String? id,
@@ -65,6 +66,7 @@ class Habit {
     required this.startDate,
     this.endTime,
     this.xpPerCompletion = 10,
+    this.durationDays = 21,
   })  : id = id ?? const Uuid().v4(),
         completedDates = completedDates ?? [],
         selectedWeekdays = selectedWeekdays ?? [1, 3, 5], // По умолчанию: понедельник, среда, пятница
@@ -87,6 +89,7 @@ class Habit {
     DateTime? startDate,
     DateTime? endTime,
     int? xpPerCompletion,
+    int? durationDays,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -104,6 +107,7 @@ class Habit {
       startDate: startDate ?? this.startDate,
       endTime: endTime ?? this.endTime,
       xpPerCompletion: xpPerCompletion ?? this.xpPerCompletion,
+      durationDays: durationDays ?? this.durationDays,
     );
   }
 
@@ -195,6 +199,7 @@ class Habit {
       'startDate': startDate.toIso8601String(),
       'endTime': endTime?.toIso8601String(),
       'xpPerCompletion': xpPerCompletion,
+      'durationDays': durationDays,
     };
   }
 
@@ -223,6 +228,7 @@ class Habit {
       startDate: DateTime.parse(json['startDate'] as String),
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime'] as String) : null,
       xpPerCompletion: json['xpPerCompletion'] as int? ?? 10,
+      durationDays: json['durationDays'] as int? ?? 21,
     );
   }
 

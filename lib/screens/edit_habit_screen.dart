@@ -50,9 +50,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
     _selectedCategory = widget.habit.category;
     _selectedWeekdays = List.from(widget.habit.selectedWeekdays);
     _selectedDuration = widget.habit.duration;
-    _selectedDurationDays = widget.habit.endTime != null 
-        ? widget.habit.endTime!.difference(widget.habit.createdAt).inDays
-        : 21;
+    _selectedDurationDays = widget.habit.durationDays;
   }
 
   @override
@@ -440,6 +438,7 @@ class _EditHabitScreenState extends State<EditHabitScreen> {
                                             _selectedDeadlineTime.minute,
                                           ),
                                           createdAt: widget.habit.createdAt,
+                                          durationDays: _selectedDurationDays,
                                         );
                                         Provider.of<HabitProvider>(context, listen: false).updateHabit(habit);
                                         Navigator.pop(context, habit);

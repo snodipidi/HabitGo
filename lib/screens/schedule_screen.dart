@@ -24,10 +24,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   List<Habit> _getHabitsForDay(DateTime? day, List<Habit> habits) {
     if (day == null) return [];
     return habits.where((habit) {
-      final isDayOfWeek = habit.selectedWeekdays.contains(day.weekday);
-      final isBeforeDeadline = habit.deadline == null || !day.isAfter(habit.deadline!);
-      final isAfterCreated = !day.isBefore(habit.createdAt);
-      return isDayOfWeek && isBeforeDeadline && isAfterCreated;
+      // Skip completed habits
+      if (habit.isCompleted) return false;
+      
+      final completed = habit.completedDates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
+      final List<DateTime> scheduledDates = [];
+      DateTime current = DateTime(habit.startDate.year, habit.startDate.month, habit.startDate.day);
+      int needed = habit.durationDays;
+      int skips = 0;
+      while (scheduledDates.length < needed) {
+        if (habit.selectedWeekdays.contains(current.weekday)) {
+          scheduledDates.add(current);
+        }
+        current = current.add(const Duration(days: 1));
+      }
+      return scheduledDates.any((d) => d.year == day.year && d.month == day.month && d.day == day.day);
     }).toList();
   }
 
@@ -111,16 +122,56 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     return _getHabitsForDay(day, habits);
                   },
                   calendarBuilders: CalendarBuilders(
-                    markerBuilder: (context, date, events) {
-                      if (events.isNotEmpty) {
-                        return Positioned(
-                          bottom: 1,
-                          child: Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF225B6A),
-                              shape: BoxShape.circle,
+                    defaultBuilder: (context, date, _) {
+                      final today = DateTime.now();
+                      final habitsForDay = _getHabitsForDay(date, habits);
+                      if (date.isAfter(today)) {
+                        // Будущие дни
+                        return null;
+                      }
+                      if (habitsForDay.isEmpty) {
+                        // Не по расписанию
+                        return null;
+                      }
+                      int done = 0;
+                      int missed = 0;
+                      int waiting = 0;
+                      for (final habit in habitsForDay) {
+                        final isCompleted = habit.completedDates.any((d) => d.year == date.year && d.month == date.month && d.day == date.day);
+                        final now = DateTime.now();
+                        final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+                        DateTime? endDateTime;
+                        if (habit.endTime != null) {
+                          endDateTime = DateTime(date.year, date.month, date.day, habit.endTime!.hour, habit.endTime!.minute);
+                        } else {
+                          endDateTime = DateTime(date.year, date.month, date.day, 23, 59);
+                        }
+                        if (isCompleted) {
+                          done++;
+                        } else if (now.isAfter(endDateTime)) {
+                          missed++;
+                        } else {
+                          waiting++;
+                        }
+                      }
+                      Color? color;
+                      if (done == habitsForDay.length) {
+                        color = Colors.green;
+                      } else if (missed == habitsForDay.length) {
+                        color = Colors.red;
+                      } else if (waiting > 0 || (done < habitsForDay.length && missed > 0)) {
+                        color = Colors.yellow[700];
+                      }
+                      if (color != null) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${date.day}',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ),
                         );
@@ -141,6 +192,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildDayView(List<Habit> habits) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: habits.isEmpty
@@ -155,7 +208,62 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final habit = habits[index];
-                return _HabitCard(habit: habit);
+                final date = _selectedDay!;
+                final isCompleted = habit.completedDates.any((d) => d.year == date.year && d.month == date.month && d.day == date.day);
+                DateTime endDateTime;
+                if (habit.endTime != null) {
+                  endDateTime = DateTime(date.year, date.month, date.day, habit.endTime!.hour, habit.endTime!.minute);
+                } else {
+                  endDateTime = DateTime(date.year, date.month, date.day, 23, 59);
+                }
+                final isExpired = now.isAfter(endDateTime) && !isCompleted && date.isBefore(today.add(const Duration(days: 1)));
+                final isWaiting = !isCompleted && !isExpired && (date.isAtSameMomentAs(today) || date.isAfter(today));
+                Color borderColor = const Color(0xFF52B3B6);
+                Icon? statusIcon;
+                if (isCompleted) {
+                  borderColor = Colors.green;
+                  statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 24);
+                } else if (isExpired) {
+                  borderColor = Colors.red;
+                  statusIcon = const Icon(Icons.cancel, color: Colors.red, size: 24);
+                } else if (isWaiting) {
+                  borderColor = Colors.yellow[700]!;
+                  statusIcon = const Icon(Icons.hourglass_empty, color: Colors.yellow, size: 24);
+                }
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(habit.category.icon, color: borderColor, size: 24),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          habit.title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: borderColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (statusIcon != null) statusIcon,
+                    ],
+                  ),
+                );
               },
             ),
     );

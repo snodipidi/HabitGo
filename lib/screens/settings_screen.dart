@@ -82,100 +82,9 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                   // БЕЛАЯ КАРТОЧКА С УРОВНЕМ
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.07),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Consumer<LevelProvider>(
-                          builder: (context, levelProvider, child) {
-                            final userLevel = levelProvider.userLevel;
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 60,
-                                      height: 60,
-                                      child: CircularProgressIndicator(
-                                        value: userLevel.getProgressPercentage(),
-                                        strokeWidth: 3,
-                                        backgroundColor: const Color(0xFFE1FFFC),
-                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF52B3B6)),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE1FFFC),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0xFF52B3B6), width: 2),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          userLevel.level.toString(),
-                                          style: const TextStyle(
-                                            color: Color(0xFF225B6A),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 24,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Consumer<LevelProvider>(
-                            builder: (context, levelProvider, child) {
-                              final userLevel = levelProvider.userLevel;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userLevel.status,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF225B6A),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${userLevel.currentXp} XP / ${userLevel.xpToNextLevel} XP до уровня ${userLevel.level + 1}',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFF52B3B6),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  //    Container(
+                  //      ...
+                  //    ),
                   // КНОПКА GOOGLE
                   SizedBox(
                     width: double.infinity,
@@ -200,8 +109,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   // СТАТИСТИКА
-                  const StatisticsCard(),
-                  const SizedBox(height: 24),
+                  //    const StatisticsCard(),
                   // ОТДЕЛЬНАЯ КАРТОЧКА НАСТРОЕК
                   Container(
                     width: double.infinity,

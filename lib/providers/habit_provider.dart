@@ -89,12 +89,7 @@ class HabitProvider with ChangeNotifier {
       );
       _habits[index].completeForDate(date);
       await _saveHabits();
-      
-      // Начисляем XP через LevelProvider
-      if (_levelProvider != null) {
-        await _levelProvider!.completeTask(xp);
-      }
-      
+      // XP больше не начисляется здесь
       notifyListeners();
     }
   }
