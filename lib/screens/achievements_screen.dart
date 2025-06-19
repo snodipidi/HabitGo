@@ -122,7 +122,8 @@ class AchievementsScreen extends StatelessWidget {
                           return _AchievementListItem(
                             habit: habit,
                             onRestore: () {
-                              habitProvider.markHabitIncomplete(habit.id, DateTime.now());
+                              final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+                              habitProvider.restoreHabit(habit.id);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Привычка восстановлена!')),
                               );
@@ -254,9 +255,63 @@ class _AchievementListItemState extends State<_AchievementListItem> with SingleT
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  // Отображение прогресса
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF225B6A),
+                            ),
+                          ),
+                          Text(
+                            '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}%',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF225B6A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: widget.habit.completedDates.length / widget.habit.durationDays,
+                          backgroundColor: const Color(0xFFE0E0E0),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            widget.habit.completedDates.length >= widget.habit.durationDays
+                                ? Colors.green
+                                : Colors.orange,
+                          ),
+                          minHeight: 6,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.habit.completedDates.length >= widget.habit.durationDays
+                            ? 'Полностью выполнено!'
+                            : 'Выполнено частично',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: widget.habit.completedDates.length >= widget.habit.durationDays
+                              ? Colors.green
+                              : Colors.orange,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.restore, color: Color(0xFF52B3B6)),
               onPressed: widget.onRestore,

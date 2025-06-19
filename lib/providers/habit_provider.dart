@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:habitgo/providers/level_provider.dart';
 import 'package:habitgo/providers/category_provider.dart';
+import 'package:flutter/material.dart';
 
 class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
@@ -126,7 +127,7 @@ class HabitProvider with ChangeNotifier {
   }
 
   // Отмечает привычку как выполненную за день
-  Future<void> markHabitCompletedForToday(String id) async {
+  Future<void> markHabitCompletedForToday(String id, BuildContext context) async {
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
       final habit = _habits[index];
@@ -141,6 +142,9 @@ class HabitProvider with ChangeNotifier {
         }
         
         notifyListeners();
+        
+        // Проверяем, завершена ли привычка
+        await checkHabitCompletion(id, context);
       }
     }
   }
@@ -188,5 +192,245 @@ class HabitProvider with ChangeNotifier {
       await _saveHabits();
       notifyListeners();
     }
+  }
+
+  // Архивирует привычку (перемещает в достижения) с сохранением прогресса
+  void archiveHabit(String id) {
+    final index = _habits.indexWhere((habit) => habit.id == id);
+    if (index != -1) {
+      _habits[index] = _habits[index].copyWith(
+        isCompleted: true, // Перемещаем в достижения
+      );
+      _saveHabits();
+      notifyListeners();
+    }
+  }
+
+  // Восстанавливает привычку из архива с сохранением прогресса
+  void restoreHabit(String id) {
+    final index = _habits.indexWhere((habit) => habit.id == id);
+    if (index != -1) {
+      _habits[index] = _habits[index].copyWith(
+        isCompleted: false, // Возвращаем в активные привычки
+      );
+      
+      // Восстанавливаем пользовательскую категорию, если она была
+      final category = _habits[index].category;
+      if (category.isCustom) {
+        final categoryProvider = _categoryProvider;
+        if (categoryProvider != null) {
+          final existingCategories = categoryProvider.customCategories;
+          final categoryExists = existingCategories.any((c) => c.label == category.label);
+          if (!categoryExists) {
+            categoryProvider.addCategory(category);
+          }
+        }
+      }
+      
+      _saveHabits();
+      notifyListeners();
+    }
+  }
+
+  // Проверяет, завершена ли привычка и показывает диалог продления
+  Future<void> checkHabitCompletion(String id, BuildContext context) async {
+    final index = _habits.indexWhere((habit) => habit.id == id);
+    if (index == -1) return;
+
+    final habit = _habits[index];
+    final isCompleted = habit.completedDates.length >= habit.durationDays;
+
+    if (isCompleted && !habit.isCompleted) {
+      // Показываем диалог с предложением продления
+      final shouldExtend = await _showCompletionDialog(context, habit);
+      
+      if (shouldExtend == true) {
+        // Продлеваем привычку на 7 дней
+        final extendedHabit = habit.copyWith(
+          durationDays: habit.durationDays + 7, // Добавляем 7 дней
+          deadline: habit.getExtendedDeadline() ?? 
+            DateTime.now().add(const Duration(days: 7)),
+        );
+        updateHabit(extendedHabit);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Привычка продлена на 7 дней!'),
+              backgroundColor: Color(0xFF52B3B6),
+            ),
+          );
+        }
+      } else if (shouldExtend == false) {
+        // Архивируем привычку
+        archiveHabit(id);
+        
+        if (context.mounted) {
+          _showCongratulationsDialog(context, habit);
+        }
+      }
+    }
+  }
+
+  // Показывает диалог с предложением продления привычки
+  Future<bool?> _showCompletionDialog(BuildContext context, Habit habit) async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.celebration,
+                color: const Color(0xFF52B3B6),
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Поздравляем!',
+                style: TextStyle(
+                  color: Color(0xFF225B6A),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Вы успешно завершили привычку "${habit.title}"!',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Хотите продолжить эту привычку еще на 7 дней?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Завершить',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF52B3B6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Продолжить',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Показывает диалог поздравления при завершении привычки
+  void _showCongratulationsDialog(BuildContext context, Habit habit) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.emoji_events,
+                color: Colors.amber,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Достижение!',
+                style: TextStyle(
+                  color: Color(0xFF225B6A),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Привычка "${habit.title}" успешно завершена!',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Вы выполнили ${habit.completedDates.length} из ${habit.durationDays} дней.',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF52B3B6),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Привычка перемещена в раздел "Достижения".',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF225B6A),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF52B3B6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Отлично!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 } 

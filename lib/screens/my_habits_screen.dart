@@ -345,7 +345,7 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
       if (mounted) {
         // Архивируем привычку
         final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-        habitProvider.markHabitComplete(widget.habit.id, DateTime.now(), 10);
+        habitProvider.archiveHabit(widget.habit.id);
       }
     } else if (_dragOffset < -threshold || velocity < -500) {
       setState(() {

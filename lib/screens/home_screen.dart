@@ -149,8 +149,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       onComplete: () async {
                                         final levelProvider = Provider.of<LevelProvider>(context, listen: false);
                                         final xp = habit.calculateXp();
-                                        habitProvider.markHabitComplete(habit.id, DateTime.now(), xp);
-                                        await levelProvider.completeTask(xp);
+                                        final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+                                        await habitProvider.markHabitCompletedForToday(habit.id, context);
                                         if (context.mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(content: Text('Привычка отмечена как выполненная!')),
@@ -288,6 +288,11 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
   late Animation<double> _heightFactor;
   bool _isExpanded = false;
 
+  // Переменные для состояния привычки
+  late bool _isCompleted;
+  late bool _isExpired;
+  late int _xp;
+
   @override
   void initState() {
     super.initState();
@@ -296,6 +301,22 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
       vsync: this,
     );
     _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+    
+    // Инициализируем переменные состояния
+    _updateHabitState();
+  }
+
+  void _updateHabitState() {
+    _isCompleted = widget.habit.isCompletedToday;
+    _xp = widget.habit.todayXp;
+    final now = DateTime.now();
+    DateTime endDateTime;
+    if (widget.habit.endTime != null) {
+      endDateTime = DateTime(now.year, now.month, now.day, widget.habit.endTime!.hour, widget.habit.endTime!.minute);
+    } else {
+      endDateTime = DateTime(now.year, now.month, now.day, 23, 59);
+    }
+    _isExpired = now.isAfter(endDateTime);
   }
 
   @override
@@ -315,33 +336,33 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
     });
   }
 
+  Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
+    if (details.primaryVelocity! > 0 && !_isCompleted && !_isExpired) {
+      // Свайп вправо - отметить как выполненное
+      final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+      await habitProvider.markHabitCompletedForToday(widget.habit.id, context);
+      
+      // Обновляем состояние после выполнения
+      _updateHabitState();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_xp > 0 ? 'Получено $_xp XP!' : 'Привычка уже выполнена сегодня'),
+            backgroundColor: _xp > 0 ? const Color(0xFF52B3B6) : Colors.grey,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isCompleted = widget.habit.isCompletedToday;
-    final xp = widget.habit.todayXp;
-    final now = DateTime.now();
-    DateTime endDateTime;
-    if (widget.habit.endTime != null) {
-      endDateTime = DateTime(now.year, now.month, now.day, widget.habit.endTime!.hour, widget.habit.endTime!.minute);
-    } else {
-      endDateTime = DateTime(now.year, now.month, now.day, 23, 59);
-    }
-    final isExpired = now.isAfter(endDateTime);
-
+    // Обновляем состояние при каждом построении
+    _updateHabitState();
+    
     return GestureDetector(
-      onHorizontalDragEnd: (details) {
-        if (details.primaryVelocity! > 0 && !isCompleted && !isExpired) {
-          // Свайп вправо - отметить как выполненное
-          final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-          habitProvider.markHabitCompletedForToday(widget.habit.id);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(xp > 0 ? 'Получено $xp XP!' : 'Привычка уже выполнена сегодня'),
-              backgroundColor: xp > 0 ? const Color(0xFF52B3B6) : Colors.grey,
-            ),
-          );
-        }
-      },
+      onHorizontalDragEnd: _handleHorizontalDragEnd,
       onTap: _toggleExpanded,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -349,9 +370,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isCompleted 
+            color: _isCompleted 
               ? Colors.green 
-              : isExpired 
+              : _isExpired 
                 ? Colors.red 
                 : const Color(0xFF52B3B6),
             width: 1.5,
@@ -373,9 +394,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
               children: [
                 Icon(
                   widget.habit.category.icon,
-                  color: isCompleted 
+                  color: _isCompleted 
                     ? Colors.green 
-                    : isExpired 
+                    : _isExpired 
                       ? Colors.red 
                       : const Color(0xFF52B3B6),
                   size: 24,
@@ -387,22 +408,22 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: isCompleted 
+                      color: _isCompleted 
                         ? Colors.green 
-                        : isExpired 
+                        : _isExpired 
                           ? Colors.red 
                           : const Color(0xFF225B6A),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (isCompleted)
+                if (_isCompleted)
                   const Icon(
                     Icons.check_circle,
                     color: Colors.green,
                     size: 24,
                   )
-                else if (isExpired)
+                else if (_isExpired)
                   const Icon(
                     Icons.cancel,
                     color: Colors.red,
@@ -410,7 +431,7 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                   )
                 else
                   Text(
-                    '+$xp XP',
+                    '+$_xp XP',
                     style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF52B3B6),
@@ -435,9 +456,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                   widget.habit.description,
                   style: TextStyle(
                     fontSize: 14,
-                    color: isCompleted 
+                    color: _isCompleted 
                       ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                      : isExpired 
+                      : _isExpired 
                         ? Colors.red.withAlpha((0.8 * 255).toInt())
                         : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
                     fontStyle: FontStyle.italic,
@@ -451,9 +472,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                 Icon(
                   Icons.access_time,
                   size: 16,
-                  color: isCompleted 
+                  color: _isCompleted 
                     ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                    : isExpired 
+                    : _isExpired 
                       ? Colors.red.withAlpha((0.8 * 255).toInt())
                       : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
                 ),
@@ -462,9 +483,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                   '${widget.habit.reminderTime.format(context)} – ${widget.habit.endTime != null ? TimeOfDay.fromDateTime(widget.habit.endTime!).format(context) : "23:59"}',
                   style: TextStyle(
                     fontSize: 13,
-                    color: isCompleted 
+                    color: _isCompleted 
                       ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                      : isExpired 
+                      : _isExpired 
                         ? Colors.red.withAlpha((0.8 * 255).toInt())
                         : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
                   ),
@@ -482,9 +503,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                       '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
                       style: TextStyle(
                         fontSize: 13,
-                        color: isCompleted 
+                        color: _isCompleted 
                           ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                          : isExpired 
+                          : _isExpired 
                             ? Colors.red.withAlpha((0.8 * 255).toInt())
                             : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
                       ),
@@ -493,9 +514,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                       '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}%',
                       style: TextStyle(
                         fontSize: 13,
-                        color: isCompleted 
+                        color: _isCompleted 
                           ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                          : isExpired 
+                          : _isExpired 
                             ? Colors.red.withAlpha((0.8 * 255).toInt())
                             : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
                       ),
@@ -509,9 +530,9 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                     value: widget.habit.completedDates.length / widget.habit.durationDays,
                     backgroundColor: const Color(0xFFE0E0E0),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      isCompleted 
+                      _isCompleted 
                         ? Colors.green 
-                        : isExpired 
+                        : _isExpired 
                           ? Colors.red 
                           : const Color(0xFF52B3B6),
                     ),
