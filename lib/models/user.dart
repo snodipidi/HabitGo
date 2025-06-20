@@ -82,11 +82,19 @@ class User {
 
   // Метод для разблокировки достижения
   void unlockAchievement(String achievementId) {
+    debugPrint('User: Starting to unlock achievement: $achievementId');
     final allAchievements = getAllAchievements();
+    debugPrint('User: Total achievements: ${allAchievements.length}');
+    
     final achievement = allAchievements.firstWhere(
       (a) => a.id == achievementId,
-      orElse: () => throw Exception('Achievement not found: $achievementId'),
+      orElse: () {
+        debugPrint('User: Achievement not found: $achievementId');
+        throw Exception('Achievement not found: $achievementId');
+      },
     );
+    
+    debugPrint('User: Found achievement: ${achievement.title}, current status: ${achievement.isUnlocked}');
     
     if (!achievement.isUnlocked) {
       final unlockedAchievement = achievement.copyWith(
@@ -94,10 +102,18 @@ class User {
         unlockedAt: DateTime.now(),
       );
       
+      debugPrint('User: Created unlocked achievement copy');
+      
       // Удаляем старое достижение если есть
       achievements.removeWhere((a) => a.id == achievementId);
+      debugPrint('User: Removed old achievement if existed');
+      
       // Добавляем новое разблокированное
       achievements.add(unlockedAchievement);
+      debugPrint('User: Added new unlocked achievement');
+      debugPrint('User: Current achievements after unlock: ${achievements.map((a) => "${a.id}:${a.isUnlocked}").join(", ")}');
+    } else {
+      debugPrint('User: Achievement was already unlocked');
     }
   }
 
@@ -110,6 +126,7 @@ class User {
         orElse: () => throw Exception('Achievement not found: $achievementId'),
       ),
     );
+    debugPrint('User: Checking achievement unlock status: $achievementId, isUnlocked: ${userAchievement.isUnlocked}');
     return userAchievement.isUnlocked;
   }
 
@@ -121,13 +138,20 @@ class User {
 
   static Future<User?> loadFromPrefs() async {
     try {
+      debugPrint('User: Starting to load user data');
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString(_userKey);
       
-      if (userJson == null) return null;
+      if (userJson == null) {
+        debugPrint('User: No saved user data found');
+        return null;
+      }
       
+      debugPrint('User: Found saved user data: $userJson');
       final userMap = json.decode(userJson) as Map<String, dynamic>;
-      return User.fromJson(userMap);
+      final user = User.fromJson(userMap);
+      debugPrint('User: Successfully loaded user with ${user.achievements.length} achievements');
+      return user;
     } catch (e) {
       // Log error and return null
       debugPrint('Error loading user data: $e');
@@ -137,9 +161,12 @@ class User {
 
   Future<void> saveToPrefs() async {
     try {
+      debugPrint('User: Starting to save user data');
       final prefs = await SharedPreferences.getInstance();
       final userJson = json.encode(toJson());
+      debugPrint('User: Encoded user data: $userJson');
       await prefs.setString(_userKey, userJson);
+      debugPrint('User: User data saved successfully');
     } catch (e) {
       // Log error but don't throw
       debugPrint('Error saving user data: $e');

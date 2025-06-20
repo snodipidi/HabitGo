@@ -144,14 +144,16 @@ class HabitProvider with ChangeNotifier {
     if (index != -1) {
       final habit = _habits[index];
       if (!habit.isCompletedToday) {
-        final xp = habit.todayXp;
         final completionTime = DateTime.now();
         habit.completeForDate(completionTime);
         await _saveHabits();
         
         // Начисляем XP через LevelProvider
-        if (_levelProvider != null && xp > 0) {
-          await _levelProvider!.completeTask(xp);
+        if (_levelProvider != null) {
+          final xp = habit.calculateXp();
+          if (xp > 0) {
+            await _levelProvider!.completeTask(xp);
+          }
         }
         
         // Проверяем достижения

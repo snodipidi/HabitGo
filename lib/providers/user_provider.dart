@@ -25,19 +25,28 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('UserProvider: Starting user initialization');
       // Проверяем Google-авторизацию через Firebase
       final firebaseUser = firebase_auth.FirebaseAuth.instance.currentUser;
       _isGoogleSignedIn = firebaseUser != null;
+      debugPrint('UserProvider: Google sign in status: $_isGoogleSignedIn');
 
       // Сначала проверяем, есть ли сохраненные данные пользователя
       _user = await User.loadFromPrefs();
+      debugPrint('UserProvider: Loaded user from prefs: ${_user != null}');
+      if (_user != null) {
+        debugPrint('UserProvider: User has ${_user!.achievements.length} achievements');
+      }
       
       // Если нет, проверяем авторизацию через Google
       if (_user == null && _isGoogleSignedIn) {
+        debugPrint('UserProvider: No local user data, checking Google auth');
         final userData = await _authService.getSavedUserData();
         if (userData['user_name'] != null) {
           _user = User(name: userData['user_name']!);
+          debugPrint('UserProvider: Created new user from Google data');
           await _user!.saveToPrefs();
+          debugPrint('UserProvider: Saved new user to prefs');
         }
       }
     } catch (e) {
@@ -110,8 +119,12 @@ class UserProvider with ChangeNotifier {
   // Метод для сохранения пользователя (используется AchievementProvider)
   Future<void> saveUser() async {
     if (_user != null) {
+      debugPrint('UserProvider: Saving user data');
       await _user!.saveToPrefs();
+      debugPrint('UserProvider: User data saved successfully');
       notifyListeners();
+    } else {
+      debugPrint('UserProvider: Cannot save user data - user is null');
     }
   }
 

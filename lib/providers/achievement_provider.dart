@@ -4,6 +4,7 @@ import 'package:habitgo/models/habit.dart';
 import 'package:habitgo/models/user.dart';
 import 'package:habitgo/providers/user_provider.dart';
 import 'package:habitgo/providers/habit_provider.dart';
+import 'package:habitgo/main.dart'; // Импорт для navigatorKey
 
 class AchievementProvider extends ChangeNotifier {
   final UserProvider _userProvider;
@@ -17,7 +18,7 @@ class AchievementProvider extends ChangeNotifier {
     if (user == null) return;
 
     // Проверяем достижения за завершение привычек разной длительности
-    final duration = habit.duration;
+    final duration = habit.durationDays;
     if (duration == 7 && !user.isAchievementUnlocked('habit_7_days')) {
       user.unlockAchievement('habit_7_days');
       _showAchievementNotification('Первые шаги');
@@ -57,6 +58,7 @@ class AchievementProvider extends ChangeNotifier {
       }
     }
 
+    // Сохраняем изменения
     _userProvider.saveUser();
     notifyListeners();
   }
@@ -112,24 +114,40 @@ class AchievementProvider extends ChangeNotifier {
   // Проверка достижений за время выполнения
   void checkTimeBasedAchievements(Habit habit, DateTime completionTime) {
     final user = _userProvider.user;
-    if (user == null) return;
+    if (user == null) {
+      debugPrint('AchievementProvider: User is null');
+      return;
+    }
 
     final hour = completionTime.hour;
+    debugPrint('AchievementProvider: Checking time-based achievements. Hour: $hour');
+    
+    bool achievementUnlocked = false;
     
     // Ранняя пташка (до 8:00)
     if (hour < 8 && !user.isAchievementUnlocked('early_bird')) {
+      debugPrint('AchievementProvider: Unlocking early_bird achievement');
       user.unlockAchievement('early_bird');
+      debugPrint('AchievementProvider: Achievement early_bird unlocked, current achievements: ${user.achievements.map((a) => "${a.id}:${a.isUnlocked}").join(", ")}');
       _showAchievementNotification('Ранняя пташка');
+      achievementUnlocked = true;
     }
     
     // Ночная сова (после 22:00)
     if (hour >= 22 && !user.isAchievementUnlocked('night_owl')) {
+      debugPrint('AchievementProvider: Unlocking night_owl achievement');
       user.unlockAchievement('night_owl');
+      debugPrint('AchievementProvider: Achievement night_owl unlocked, current achievements: ${user.achievements.map((a) => "${a.id}:${a.isUnlocked}").join(", ")}');
       _showAchievementNotification('Ночная сова');
+      achievementUnlocked = true;
     }
 
-    _userProvider.saveUser();
-    notifyListeners();
+    // Сохраняем изменения только если было разблокировано хотя бы одно достижение
+    if (achievementUnlocked) {
+      debugPrint('AchievementProvider: Saving user after unlocking achievements');
+      _userProvider.saveUser();
+      notifyListeners();
+    }
   }
 
   // Проверка достижений за выходные
@@ -236,9 +254,145 @@ class AchievementProvider extends ChangeNotifier {
 
   // Метод для показа уведомления о достижении
   void _showAchievementNotification(String achievementTitle) {
-    // Здесь можно добавить логику показа уведомления
-    // Например, использовать flutter_local_notifications или показать SnackBar
-    debugPrint('🎉 Достижение разблокировано: $achievementTitle');
+    final achievement = _userProvider.user?.getAllAchievements().firstWhere(
+      (a) => a.title == achievementTitle,
+      orElse: () => throw Exception('Achievement not found: $achievementTitle'),
+    );
+    
+    if (achievement == null) return;
+
+    // Получаем глобальный контекст через навигатор
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Достижение',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: achievement.color.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          achievement.icon,
+                          size: 48,
+                          color: achievement.color,
+                        ),
+                      ),
+                      Positioned(
+                        right: -8,
+                        top: -8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Новое достижение!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF225B6A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    achievement.title,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: achievement.color,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    achievement.description,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF225B6A),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: achievement.color,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Круто!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: Curves.elasticOut,
+            ),
+          ),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   // Метод для проверки всех достижений

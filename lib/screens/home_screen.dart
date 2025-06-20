@@ -266,43 +266,62 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         Expanded(
-                          child: habitProvider.todayHabits.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'Нет привычек на сегодня.',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  itemCount: habitProvider.todayHabits.length,
-                                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                                  itemBuilder: (context, index) {
-                                    final habit = habitProvider.todayHabits[index];
-                                    return _HabitListItem(
-                                      habit: habit,
-                                      index: index,
-                                      onDelete: () => _deleteHabit(habit),
-                                      onComplete: () async {
-                                        final levelProvider = Provider.of<LevelProvider>(context, listen: false);
-                                        final xp = habit.calculateXp();
-                                        final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-                                        await habitProvider.markHabitCompletedForToday(habit.id, context);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Привычка отмечена как выполненная!')),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
+                          child: CustomScrollView(
+                            slivers: [
+                              SliverToBoxAdapter(
+                                child: habitProvider.todayHabits.isEmpty
+                                    ? const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.only(top: 32.0),
+                                          child: Text(
+                                            'Нет привычек на сегодня.',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.black54,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Column(
+                                        children: List.generate(
+                                          habitProvider.todayHabits.length,
+                                          (index) {
+                                            final habit = habitProvider.todayHabits[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.only(bottom: 12.0),
+                                              child: _HabitListItem(
+                                                habit: habit,
+                                                index: index,
+                                                onDelete: () => _deleteHabit(habit),
+                                                onComplete: () async {
+                                                  final levelProvider = Provider.of<LevelProvider>(context, listen: false);
+                                                  final xp = habit.calculateXp();
+                                                  final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+                                                  await habitProvider.markHabitCompletedForToday(habit.id, context);
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('Привычка отмечена как выполненная!')),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                              ),
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 28),
+                              ),
+                              const SliverToBoxAdapter(
+                                child: RecommendationsSection(),
+                              ),
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 16),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 28),
-                        const RecommendationsSection(),
-                        const SizedBox(height: 16),
                       ],
                     )
                   : _selectedIndex == 1
@@ -422,10 +441,13 @@ class _HabitListItem extends StatefulWidget {
   State<_HabitListItem> createState() => _HabitListItemState();
 }
 
-class _HabitListItemState extends State<_HabitListItem> with SingleTickerProviderStateMixin {
+class _HabitListItemState extends State<_HabitListItem> with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _swipeController;
   late Animation<double> _heightFactor;
+  late Animation<double> _swipeFillWidth;
   bool _isExpanded = false;
+  bool _isSwiping = false;
 
   // Переменные для состояния привычки
   late bool _isCompleted;
@@ -439,7 +461,12 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+    _swipeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
     _heightFactor = _controller.drive(CurveTween(curve: Curves.easeInOut));
+    _swipeFillWidth = _swipeController.drive(CurveTween(curve: Curves.easeInOut));
     
     // Инициализируем переменные состояния
     _updateHabitState();
@@ -461,6 +488,7 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
   @override
   void dispose() {
     _controller.dispose();
+    _swipeController.dispose();
     super.dispose();
   }
 
@@ -475,23 +503,56 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
     });
   }
 
+  Future<void> _handleHorizontalDragUpdate(DragUpdateDetails details) async {
+    if (!_isCompleted && !_isExpired) {
+      final containerWidth = context.size?.width ?? 0;
+      final dragProgress = details.primaryDelta! / containerWidth;
+      if (dragProgress > 0) {
+        setState(() {
+          _isSwiping = true;
+          _swipeController.value = _swipeController.value + dragProgress;
+        });
+      }
+    }
+  }
+
   Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
-    if (details.primaryVelocity! > 0 && !_isCompleted && !_isExpired) {
-      // Свайп вправо - отметить как выполненное
-      final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-      await habitProvider.markHabitCompletedForToday(widget.habit.id, context);
-      
-      // Обновляем состояние после выполнения
-      _updateHabitState();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_xp > 0 ? 'Получено $_xp XP!' : 'Привычка уже выполнена сегодня'),
-            backgroundColor: _xp > 0 ? const Color(0xFF52B3B6) : Colors.grey,
-          ),
+    if (!_isCompleted && !_isExpired) {
+      if (_swipeController.value > 0.5) {
+        // Завершаем анимацию заполнения
+        await _swipeController.animateTo(1.0, 
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+        );
+        
+        // Получаем XP до отметки о выполнении
+        final xp = widget.habit.calculateXp();
+        
+        // Отмечаем привычку как выполненную
+        final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+        await habitProvider.markHabitCompletedForToday(widget.habit.id, context);
+        
+        // Обновляем состояние после выполнения
+        _updateHabitState();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Получено $xp XP!'),
+              backgroundColor: const Color(0xFF52B3B6),
+            ),
+          );
+        }
+      } else {
+        // Отменяем анимацию заполнения
+        await _swipeController.animateTo(0.0,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
         );
       }
+      setState(() {
+        _isSwiping = false;
+      });
     }
   }
 
@@ -501,156 +562,128 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
     _updateHabitState();
     
     return GestureDetector(
+      onHorizontalDragUpdate: _handleHorizontalDragUpdate,
       onHorizontalDragEnd: _handleHorizontalDragEnd,
       onTap: _toggleExpanded,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _isCompleted 
-              ? Colors.green 
-              : _isExpired 
-                ? Colors.red 
-                : const Color(0xFF52B3B6),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+      child: Stack(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isCompleted 
+                  ? Colors.green 
+                  : _isExpired 
+                    ? Colors.red 
+                    : const Color(0xFF52B3B6),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  widget.habit.category.icon,
-                  color: _isCompleted 
-                    ? Colors.green 
-                    : _isExpired 
-                      ? Colors.red 
-                      : const Color(0xFF52B3B6),
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.habit.title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      widget.habit.category.icon,
                       color: _isCompleted 
                         ? Colors.green 
                         : _isExpired 
                           ? Colors.red 
-                          : const Color(0xFF225B6A),
+                          : const Color(0xFF52B3B6),
+                      size: 24,
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (_isCompleted)
-                  const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 24,
-                  )
-                else if (_isExpired)
-                  const Icon(
-                    Icons.cancel,
-                    color: Colors.red,
-                    size: 24,
-                  )
-                else
-                  Text(
-                    '+$_xp XP',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF52B3B6),
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.habit.title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _isCompleted 
+                            ? Colors.green 
+                            : _isExpired 
+                              ? Colors.red 
+                              : const Color(0xFF225B6A),
+                        ),
+                      ),
                     ),
-                  ),
-              ],
-            ),
-            if (widget.habit.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return ClipRect(
-                    child: Align(
-                      heightFactor: _heightFactor.value,
-                      child: child,
-                    ),
-                  );
-                },
-                child: Text(
-                  widget.habit.description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _isCompleted 
-                      ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                      : _isExpired 
-                        ? Colors.red.withAlpha((0.8 * 255).toInt())
-                        : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
-                    fontStyle: FontStyle.italic,
-                  ),
+                    const SizedBox(width: 8),
+                    if (_isCompleted)
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 24,
+                      )
+                    else if (_isExpired)
+                      const Icon(
+                        Icons.cancel,
+                        color: Colors.red,
+                        size: 24,
+                      )
+                    else
+                      Text(
+                        '+$_xp XP',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF52B3B6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: _isCompleted 
-                    ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                    : _isExpired 
-                      ? Colors.red.withAlpha((0.8 * 255).toInt())
-                      : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${widget.habit.reminderTime.format(context)} – ${widget.habit.endTime != null ? TimeOfDay.fromDateTime(widget.habit.endTime!).format(context) : "23:59"}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: _isCompleted 
-                      ? Colors.green.withAlpha((0.8 * 255).toInt()) 
-                      : _isExpired 
-                        ? Colors.red.withAlpha((0.8 * 255).toInt())
-                        : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
+                if (widget.habit.description.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      return ClipRect(
+                        child: Align(
+                          heightFactor: _heightFactor.value,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Text(
+                      widget.habit.description,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: _isCompleted 
                           ? Colors.green.withAlpha((0.8 * 255).toInt()) 
                           : _isExpired 
                             ? Colors.red.withAlpha((0.8 * 255).toInt())
                             : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: _isCompleted 
+                        ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                        : _isExpired 
+                          ? Colors.red.withAlpha((0.8 * 255).toInt())
+                          : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                    ),
+                    const SizedBox(width: 6),
                     Text(
-                      '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}%',
+                      '${widget.habit.reminderTime.format(context)} – ${widget.habit.endTime != null ? TimeOfDay.fromDateTime(widget.habit.endTime!).format(context) : "23:59"}',
                       style: TextStyle(
                         fontSize: 13,
                         color: _isCompleted 
@@ -662,69 +695,126 @@ class _HabitListItemState extends State<_HabitListItem> with SingleTickerProvide
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: widget.habit.completedDates.length / widget.habit.durationDays,
-                    backgroundColor: const Color(0xFFE0E0E0),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _isCompleted 
-                        ? Colors.green 
-                        : _isExpired 
-                          ? Colors.red 
-                          : const Color(0xFF52B3B6),
-                    ),
-                    minHeight: 6,
-                  ),
-                ),
-                if (widget.habit.needsExtension()) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withAlpha((0.2 * 255).toInt()),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.orange.withAlpha((0.5 * 255).toInt()),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.schedule,
-                          size: 14,
-                          color: Colors.orange[700],
-                        ),
-                        const SizedBox(width: 4),
                         Text(
-                          'Продлено на ${widget.habit.getMissedDaysCount()} дн.',
+                          '${widget.habit.completedDates.length}/${widget.habit.durationDays} дней',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.orange[700],
-                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: _isCompleted 
+                              ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                              : _isExpired 
+                                ? Colors.red.withAlpha((0.8 * 255).toInt())
+                                : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
+                          ),
+                        ),
+                        Text(
+                          '${(widget.habit.completedDates.length / widget.habit.durationDays * 100).toInt()}%',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _isCompleted 
+                              ? Colors.green.withAlpha((0.8 * 255).toInt()) 
+                              : _isExpired 
+                                ? Colors.red.withAlpha((0.8 * 255).toInt())
+                                : const Color(0xFF225B6A).withAlpha((0.8 * 255).toInt()),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  if (widget.habit.getExtendedDeadline() != null) ...[
                     const SizedBox(height: 4),
-                    Text(
-                      'До ${widget.habit.getExtendedDeadline()!.day}.${widget.habit.getExtendedDeadline()!.month}.${widget.habit.getExtendedDeadline()!.year}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.orange[700],
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: widget.habit.completedDates.length / widget.habit.durationDays,
+                        backgroundColor: const Color(0xFFE0E0E0),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _isCompleted 
+                            ? Colors.green 
+                            : _isExpired 
+                              ? Colors.red 
+                              : const Color(0xFF52B3B6),
+                        ),
+                        minHeight: 6,
                       ),
                     ),
+                    if (widget.habit.needsExtension()) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withAlpha((0.2 * 255).toInt()),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.orange.withAlpha((0.5 * 255).toInt()),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: Colors.orange[700],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Продлено на ${widget.habit.getMissedDaysCount()} дн.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (widget.habit.getExtendedDeadline() != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'До ${widget.habit.getExtendedDeadline()!.day}.${widget.habit.getExtendedDeadline()!.month}.${widget.habit.getExtendedDeadline()!.year}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.orange[700],
+                          ),
+                        ),
+                      ],
+                    ],
                   ],
-                ],
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+          if (_isSwiping)
+            Positioned.fill(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return AnimatedBuilder(
+                    animation: _swipeController,
+                    builder: (context, child) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: constraints.maxWidth * _swipeController.value,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFA5D6A7).withOpacity(0.4),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
